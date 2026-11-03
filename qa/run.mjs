@@ -4,11 +4,11 @@ import { chromium } from "playwright";
 import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import vm from "node:vm";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import path from "node:path";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const url = "file://" + path.join(root, "index.html");
+const url = pathToFileURL(path.join(root, "index.html")).href; // # などを含むフォルダ名でも開ける
 const results = [];
 const check = (name, ok, detail = "") => results.push({ name, ok: !!ok, detail });
 const C = createRequire(import.meta.url)(path.join(root, "tools/color.cjs"));
@@ -61,7 +61,7 @@ async function newPage(w = 390, h = 844) {
 }
 // お手本どおりに桶を押す
 async function dyeRecipe(page) {
-  const r = await page.evaluate(() => { const s = window.__kz.load(); return window.__kz.D.COLORS[s.run.list[s.run.res.length]].r; });
+  const r = await page.evaluate(() => { const r = window.__kz.load().runs[window.__kz.mode()]; return window.__kz.D.COLORS[r.list[r.res.length]].r; });
   for (let k = 0; k < 4; k++) for (let j = 0; j < r[k]; j++) await page.click(`.vat[data-k="${k}"]`);
   return r;
 }
@@ -91,8 +91,11 @@ try {
   check("60日分の「今日の5色」がすべてちがう（飽きない）", days === 60, `${days}/60`);
   const same = await page.evaluate(() => { const { D, dyeHex, pctOf } = window.__kz; return D.COLORS.filter((c) => pctOf(c.r, c) !== 100).map((c) => c.n); });
   check("お手本どおりに染めると100%になる（画面の式とデータが同じ）", same.length === 0, same.join(","));
-  const order = await page.evaluate(() => { const { D, dyeHex } = window.__kz; return dyeHex([2, 1, 3, 0]) === dyeHex([2, 1, 3, 0]) && D.COLORS.length > 0; });
-  check("染めの計算が動く", order);
+  { // 画面の染めの式を、検査側（tools/color.cjs）で別に計算した色と突き合わせる
+    const base = C.hex2rgb(BASE).map(C.lin), want = (n) => C.rgb2hex(base.map((v, i) => C.gam(v * VATS.reduce((m, V, k) => m * V.t[i] ** n[k], 1))));
+    const cases = [[0, 0, 0, 0], [2, 1, 3, 0], [5, 0, 0, 2], [0, 6, 1, 4], [12, 0, 0, 0]];
+    const got = await page.evaluate((cs) => cs.map((n) => window.__kz.dyeHex(n)), cases);
+    check("画面の染めの色が、検査側で別に計算した色と同じ（白い布は生成りのまま）", cases.every((n, i) => got[i] === want(n)) && got[0] === BASE, got.join(",")); }
 
   // 3. はじめての画面：遊び方が開く・Ko-fi のひとことは出ない
   check("はじめて開くと遊び方が出る", await page.locator("#howto[open]").count() === 1);
@@ -150,7 +153,16 @@ try {
   check("上級も途中で閉じたら続きから", (await page.textContent("#go-h")).includes("続きから"));
   await page.click("#go-h");
   check("続きは2色目から", (await page.textContent("header")).includes("2/5"));
+  await page.click("#memo"); await page.reload(); await page.click("#go-h");
+  check("上級で「覚えた」を押したあと開き直しても、見本は隠れたまま・すぐ染められる", await page.locator("#hid").isVisible() && (await page.locator("#memo").count()) === 0 && !(await page.isDisabled('.vat[data-k="0"]')));
+  // 別のタブで同じ色を先に決めていたら、この画面の答えは入れない
+  await page.evaluate(() => { const s = JSON.parse(localStorage.getItem("kasane-v1")); s.runs.h.res.push({ n: [1, 0, 0, 0], p: 50 }); localStorage.setItem("kasane-v1", JSON.stringify(s)); });
+  await page.click('.vat[data-k="0"]'); await page.click("#decide");
+  check("別のタブで先に進んでいたら、古い画面の答えは足さず今の色を出し直す", (await page.evaluate(() => window.__kz.load().runs.h.res.length)) === 2 && (await page.textContent("header")).includes("3/5"));
   await page.click("#back");
+  // 練習を始めても上級の途中経過は消えない
+  await page.click("#go-p"); await page.click("#back");
+  check("練習を始めても、上級の途中経過は消えない（続きから）", (await page.textContent("#go-h")).includes("続きから") && (await page.evaluate(() => window.__kz.load().runs.h.res.length)) === 2);
 
   // 6. 練習と色帳
   const before = await page.evaluate(() => Object.keys(window.__kz.load().days).length);

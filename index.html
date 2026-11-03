@@ -226,7 +226,9 @@ const dailyList = (k) => pick(seedOf(k));
 const hardList = (k) => pick(seedOf(k + "h"), true, dailyList(k));
 
 // ---- 記録（この端末の localStorage だけ）----
-const fresh = () => ({ v: 1, days: {}, hdays: {}, dex: {}, run: null, tut: false, kofi: {} });
+// 進行中の遊びはモードごとに分けて持つ（練習を始めても今日の5色・上級の途中経過を消さない）
+const fresh = () => ({ v: 1, days: {}, hdays: {}, dex: {}, runs: {}, tut: false, kofi: {} });
+let MODE = "d";
 function load() { try { const s = JSON.parse(localStorage.getItem(KEY)); if (s && s.v === 1) return Object.assign(fresh(), s); } catch (e) {} return fresh(); }
 // 保存の前に読み直す（別のタブで進めた記録を消さない）
 function save(fn) { const s = load(); fn(s); try { localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {} return s; }
@@ -251,15 +253,15 @@ $("howto-ok").onclick = () => { const d = $("howto"); d.close ? d.close() : d.re
 function home() {
   const s = load(), k = todayKey(), done = s.days[k], hdone = s.hdays[k];
   const n3 = Object.values(s.dex).filter((x) => x >= 3).length, seen = Object.keys(s.dex).length;
-  const run = s.run && s.run.date === k && s.run.mode !== "p" ? s.run : null;
+  const rd = s.runs.d && s.runs.d.date === k ? s.runs.d : null, rh = s.runs.h && s.runs.h.date === k ? s.runs.h : null;
   const heroCols = ["#33a6b8", "#cb1b45", "#e9cd4c"];
   app.innerHTML = `
     <div class="hero" aria-hidden="true">${heroCols.map((_, i) => `<div class="h"><div class="pole"></div><div class="cloth" style="--col:${heroCols[i]}"></div></div>`).join("")}</div>
     <h1 class="title">重ね染め</h1>
     <p class="lead">染め液を重ねて、見本の伝統色を染める。<br>だれでも同じ1日5色。</p>
     ${done ? `<div class="share">今日の結果　平均 ${avg(done.p)}%\n${done.p.map((p) => "★".repeat(starsOf(p)) || "・").join("　")}</div>` : ""}
-    <button class="main" id="go-d">${done ? "今日の結果を見る" : run && run.mode === "d" ? `続きから（${run.res.length + 1}色目）` : `今日の5色をはじめる <small>#${dayNo(k)}</small>`}</button>
-    ${done ? `<button class="main" id="go-h" style="background:var(--paper);box-shadow:0 4px 0 #9b927f">${hdone ? "上級の結果を見る" : run && run.mode === "h" ? "上級の続きから" : "上級：記憶染め（見本は最初だけ）"}</button>` : ""}
+    <button class="main" id="go-d">${done ? "今日の結果を見る" : rd ? `続きから（${rd.res.length + 1}色目）` : `今日の5色をはじめる <small>#${dayNo(k)}</small>`}</button>
+    ${done ? `<button class="main" id="go-h" style="background:var(--paper);box-shadow:0 4px 0 #9b927f">${hdone ? "上級の結果を見る" : rh ? "上級の続きから" : "上級：記憶染め（見本は最初だけ）"}</button>` : ""}
     <div class="row"><button class="sub" id="go-p">練習（何度でも）</button><button class="sub" id="go-dex">色帳 ${seen}/${D.COLORS.length}</button></div>
     <div class="stats"><div><b>${streak(s.days)}</b><small>連続の日</small></div><div><b>${Object.keys(s.days).length}</b><small>染めた日</small></div><div><b>${n3}</b><small>★3の色</small></div></div>
     <p class="rank">称号：${rankOf(n3)}${n3 < 30 ? `（★3の色があと${[5, 15, 30].find((x) => x > n3) - n3}つで${rankOf([5, 15, 30].find((x) => x > n3))}）` : ""}</p>
@@ -275,47 +277,50 @@ function home() {
 function startRun(mode, only) {
   const k = todayKey();
   save((s) => {
-    if (s.run && s.run.date === k && s.run.mode === mode && mode !== "p") return; // 続きから
+    if (mode !== "p" && s.runs[mode] && s.runs[mode].date === k) return; // 続きから
     let list;
     if (mode === "d") list = dailyList(k);
     else if (mode === "h") list = hardList(k);
     else if (only != null) list = [only];
     else { const pool = D.COLORS.map((_, i) => i); for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; } list = pool.slice(0, PER); }
-    s.run = { mode, date: k, list, res: [] };
+    s.runs[mode] = { mode, date: k, list, res: [] };
   });
+  MODE = mode;
   play();
 }
 
 let cur = null; // 今の色の染め：{ n:[回数], hist:[押した桶], shown }
 function play() {
-  const s = load(), run = s.run;
+  const s = load(), run = s.runs[MODE];
   if (!run) return home();
   const i = run.res.length;
   if (i >= run.list.length) return finish();
   const col = D.COLORS[run.list[i]];
-  cur = { n: [0, 0, 0, 0], hist: [], shown: run.mode !== "h", decided: false };
+  // 上級で「覚えた」を押した色は、開き直しても見本を隠したまま
+  const memo = run.mode === "h" && run.memo === i;
+  cur = { n: [0, 0, 0, 0], hist: [], shown: run.mode !== "h" || memo, decided: false, i, date: run.date };
   const label = run.mode === "d" ? `今日の5色` : run.mode === "h" ? "上級" : "練習";
   app.innerHTML = `
     <header><button class="icon" id="back" aria-label="もどる">←</button>
       <div class="dots" aria-label="${i + 1}色目／${run.list.length}色">${run.list.map((_, j) => `<i class="${j < i ? "done" : j === i ? "on" : ""}"></i>`).join("")}</div>
       <span style="font-size:13px;color:var(--muted)">${label} ${i + 1}/${run.list.length}</span></header>
     <div class="pair">
-      <div class="sw"><div class="lab"><span>見本</span></div><div style="position:relative"><div class="pole"></div><div class="cloth" id="tgt" style="--col:${col.c}"></div>${cur.shown ? "" : `<div class="hidden-t" id="hid" hidden>？</div>`}</div>
+      <div class="sw"><div class="lab"><span>見本</span></div><div style="position:relative"><div class="pole"></div><div class="cloth" id="tgt" style="--col:${col.c}"></div>${run.mode !== "h" ? "" : `<div class="hidden-t" id="hid"${memo ? "" : " hidden"}>？</div>`}</div>
         <div class="lab"><b>${col.n}</b><span>${col.y}</span></div></div>
       <div class="sw"><div class="lab"><span>あなたの布</span></div><div><div class="pole"></div><div class="cloth" id="mine" style="--col:${D.BASE}"></div></div>
         <div class="lab"><span id="mine-r" style="font-size:12px">まだ白い布</span></div></div>
     </div>
     <div class="count"><span>染めた回数</span><span class="bar"><i id="cbar" style="width:0"></i></span><span id="cnum">0 / ${D.MAX}</span></div>
-    ${run.mode === "h" ? `<button class="main" id="memo">見本を覚えた（もう見られません）</button>` : ""}
+    ${run.mode === "h" && !memo ? `<button class="main" id="memo">見本を覚えた（もう見られません）</button>` : ""}
     <div class="vats" id="vats">${D.VATS.map((v, k) => `<button class="vat" data-k="${k}" aria-label="${v.n}で染める"><span class="tub"><span class="liq" style="--dye:${dyeHex(D.VATS.map((_, j) => (j === k ? 5 : 0)))}"></span></span><span class="nm">${v.n}</span><span class="badge" id="b${k}"></span></button>`).join("")}</div>
     <div class="row"><button class="sub" id="undo" disabled>ひとつ戻す</button><button class="sub" id="reset" disabled>はじめから</button></div>
     <button class="main" id="decide" disabled>これで決める</button>
     <div id="after"></div>
     ${!s.tut || (run.mode !== "h" && Object.keys(s.dex).length === 0 && i === 0) ? `<p class="hint">桶を押すと布が染まります。重ねるほど濃くなります。</p>` : ""}`;
   $("back").onclick = home;
-  const lock = run.mode === "h";
+  const lock = run.mode === "h" && !memo;
   document.querySelectorAll(".vat").forEach((b) => { b.disabled = lock; b.onclick = () => dip(+b.dataset.k, b); });
-  if (lock) $("memo").onclick = () => { cur.shown = true; $("hid").hidden = false; $("memo").remove(); document.querySelectorAll(".vat").forEach((b) => (b.disabled = false)); };
+  if (lock) $("memo").onclick = () => { cur.shown = true; save((s2) => { const r = s2.runs[MODE]; if (r && r.res.length === i) r.memo = i; }); $("hid").hidden = false; $("memo").remove(); document.querySelectorAll(".vat").forEach((b) => (b.disabled = false)); };
   $("undo").onclick = () => { const k = cur.hist.pop(); if (k != null) { cur.n[k]--; paint(); } };
   $("reset").onclick = () => { cur.n = [0, 0, 0, 0]; cur.hist = []; paint(); };
   $("decide").onclick = () => decide(col);
@@ -342,13 +347,17 @@ function decide(col) {
   cur.decided = true; paintCount();
   document.querySelectorAll(".vat").forEach((b) => (b.disabled = true));
   const p = pctOf(cur.n, col), st = starsOf(p);
+  let stale = false;
   const s = save((s) => {
-    if (!s.run) return;
-    s.run.res.push({ n: cur.n.slice(), p });
+    const r = s.runs[MODE];
+    // 別のタブで先に進んでいたら、この画面の答えは入れない（同じ色の答えが2つにならないように）
+    if (!r || r.date !== cur.date || r.res.length !== cur.i) { stale = true; return; }
+    r.res.push({ n: cur.n.slice(), p });
     s.dex[col.n] = Math.max(s.dex[col.n] || 0, st);
   });
+  if (stale) { toast("別の画面で先に進んでいます"); return play(); }
   if ($("hid")) $("hid").hidden = true; // 上級でも決めたあとは見本を見せて比べる
-  const last = s.run && s.run.res.length >= s.run.list.length;
+  const last = s.runs[MODE] && s.runs[MODE].res.length >= s.runs[MODE].list.length;
   const best = col.r;
   $("after").innerHTML = `<div class="verdict" role="status">
     <div class="pct">${p}<small>%</small> ${starStr(st)}</div>
@@ -361,14 +370,14 @@ function decide(col) {
 }
 
 function finish() {
-  const s = load(), run = s.run;
+  const s = load(), run = s.runs[MODE];
   if (!run) return home();
   const ps = run.res.map((r) => r.p);
   let first = false;
   save((s2) => {
     if (run.mode === "d" && !s2.days[run.date]) { s2.days[run.date] = { p: ps, n: run.res.map((r) => r.n) }; first = true; }
     if (run.mode === "h" && !s2.hdays[run.date]) { s2.hdays[run.date] = { p: ps, n: run.res.map((r) => r.n) }; first = true; }
-    s2.run = null;
+    s2.runs[MODE] = null;
   });
   if (run.mode === "p") return result("p", run.date, run);
   result(run.mode, run.date, null, first);
@@ -432,7 +441,7 @@ function dex(sel) {
   bindFooter();
 }
 
-window.__kz = { D, pick, dailyList, hardList, dyeHex, deOf, pctOf, starsOf, seedOf, todayKey, dayNo, shareText, streak, load };
+window.__kz = { mode: () => MODE, D, pick, dailyList, hardList, dyeHex, deOf, pctOf, starsOf, seedOf, todayKey, dayNo, shareText, streak, load };
 home();
 if ("serviceWorker" in navigator && location.protocol === "https:" && /github\.io$/.test(location.hostname)) navigator.serviceWorker.register("sw.js").catch(() => {});
 </script>
