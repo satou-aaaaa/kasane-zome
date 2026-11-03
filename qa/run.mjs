@@ -158,8 +158,10 @@ try {
   for (let i = 0; i < 5; i++) { await page.click('.vat[data-k="3"]'); await page.click("#decide"); await page.click("#next"); }
   check("練習は今日の記録を増やさず、シェアと Ko-fi を出さない", (await page.evaluate(() => Object.keys(window.__kz.load().days).length)) === before && (await page.locator(".kofi, #share").count()) === 0);
   await page.click("#go-dex");
-  const seen = await page.evaluate(() => Object.keys(window.__kz.load().dex).length);
-  check("色帳に出会った色が載る（今日・上級・練習）", seen >= 10 && (await page.locator(".dex .cloth").count()) === seen, `${seen}色`);
+  // 練習の5色は乱数なので今日の色と重なることがある（2026-11-04 CI で「10色以上」が8色で落ちた）。決まって載る色だけを数える
+  const dexOk = await page.evaluate(() => { const { load, dailyList, hardList, todayKey, D } = window.__kz, s = load(), k = todayKey(); return { n: Object.keys(s.dex).length, must: [...dailyList(k), hardList(k)[0]].every((i) => D.COLORS[i].n in s.dex) }; });
+  const seen = dexOk.n;
+  check("色帳に出会った色が載る（今日の5色・上級の1色目・練習）", dexOk.must && seen >= 6 && (await page.locator(".dex .cloth").count()) === seen, `${seen}色`);
   await page.locator(".dex button:has(.cloth)").first().click();
   check("色帳の色を押すと名前と、その色だけの練習が出る", (await page.locator(".sheet h3").count()) === 1 && (await page.locator("#prac").count()) === 1);
   await page.click("#prac");
