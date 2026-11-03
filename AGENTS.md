@@ -32,6 +32,7 @@ node qa/run.mjs   # お手本がいちばん近いか（全部計算し直し）
 - 押せる所は高さ44px以上（QA が見る）。機能を足す・直すたびに `qa/run.mjs` に検査を足す。乱数で組む部分は何千回も作って確かめる（shared-workflows `incidents/2026-10-31-roppo-empty-village.md`）。
 - PWA（`manifest.webmanifest`・`sw.js`・`icon-*.png`）：画面のファイルを足したら `sw.js` の `SHELL` にも足し、中身を大きく変えたら `CACHE` の版を上げる。アイコンは `node tools/make-icons.cjs`、SNS 用の絵 `og.png` は `node tools/make-og.cjs`（答えを入れない）。
 - 公開リポジトリなので、個人情報・鍵を入れない。
+- 同じ日はどの端末でも同じ問題にする：乱数は `sort` の比較の中で引かない（引く回数がブラウザで変わる。2026-11-04 路線図ひと筆で CodeRabbit が指摘。QA が見る）。少し遅れて動く処理（setTimeout）は、画面が替わっていたら何もしない。
 
 ## 公開
 

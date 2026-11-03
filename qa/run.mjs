@@ -1,7 +1,7 @@
 // 重ね染めの検査。データ（お手本が本当にいちばん近いか）・5色の組み方（何千回）・通しで遊ぶ・記録・続きから・上級・色帳・スマホ幅・PWA を確かめる。
 // 使い方: node qa/run.mjs   失敗があれば終了コード 1。結果は qa-report/report.md。
 import { chromium } from "playwright";
-import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
 import { createRequire } from "node:module";
 import vm from "node:vm";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -53,7 +53,7 @@ const isNoise = (t) => /fonts\.(googleapis|gstatic)\.com|ERR_NAME_NOT_RESOLVED|E
 const errors = [];
 async function newPage(w = 390, h = 844) {
   const page = await browser.newPage({ viewport: { width: w, height: h } });
-  page.on("pageerror", (e) => errors.push(e.message));
+  page.on("pageerror", (e) => errors.push(e.stack));
   page.on("console", (m) => { if (m.type() === "error" && !isNoise(m.text())) errors.push(m.text()); });
   await page.goto(url);
   await page.evaluate(() => localStorage.clear()); await page.reload();
@@ -195,6 +195,27 @@ try {
     check(`幅${w}px：横にはみ出さず、押せる所は高さ44px以上`, homeOk && !r.over && r.small.length === 0, r.small.join(","));
     await p3.close();
   }
+  { // 保存できないブラウザでも遊べる（開いているあいだは途中経過を覚えている）
+    const pb = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    pb.on("pageerror", (e) => errors.push(e.message));
+    await pb.addInitScript(() => { Storage.prototype.setItem = () => { throw new Error("blocked"); }; });
+    await pb.goto(url); await pb.click("#howto-ok"); await pb.click("#go-d");
+    check("保存できないブラウザでも、今日の1問目が始まる", (await pb.textContent("header")).includes("1/5"));
+    await pb.click("#back");
+    check("保存できないブラウザでも、遊び方が何度も開かない", !(await pb.locator("#howto[open]").count()));
+    await pb.close(); }
+  { // 最後の1問を終えて「結果を見る」を押す前に閉じた日は、開き直すと結果へ進み記録がつく
+    const pc = await newPage();
+    await pc.evaluate(() => { const g = window.__kz, k = g.todayKey(); localStorage.setItem("kasane-v1", JSON.stringify({ v: 1, tut: true, days: {}, hdays: {}, dex: {}, cnt: 0, clean: 0, kofi: {}, runs: { d: { mode: "d", date: k, list: g.dailyList(k), res: [0, 1, 2, 3, 4].map(() => ({ n: [1, 0, 0, 0], p: 90 })) } } })); });
+    await pc.reload();
+    check("最後の1問のあと閉じても、開き直すと結果へ進み今日の記録がつく", await pc.evaluate(() => { const g = window.__kz; return !!g.load().days[g.todayKey()] && !g.load().runs.d; }));
+    await pc.close(); }
+  { // 同じ日はどのブラウザでも同じ問題：sort の比較の中で乱数を引かない（引く回数がブラウザで変わる）
+    const src = ["index.html", ...["gen.js", "data.js"].filter((f) => existsSync(path.join(root, f)))].map((f) => readFileSync(path.join(root, f), "utf8")).join("\n");
+    const bad = src.match(/\.sort\(\s*\([^)]*\)\s*=>[^\n;]*\b(R|rng|rand|Math\.random)\s*\(/g) || [];
+    check("並べ替えの比較の中で乱数を引いていない（同じ日に人によって問題が変わらない）", bad.length === 0, bad.join(" | ")); }
+} catch (e) { // 途中で止まっても、ここまでの結果とレポートは書き出す
+  check("QA の操作が最後まで完了する", false, e.message.split("\n")[0]);
 } finally {
   await browser.close();
 }
