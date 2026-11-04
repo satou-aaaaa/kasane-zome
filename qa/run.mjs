@@ -45,6 +45,7 @@ check("Math.random は練習の色選びだけ（今日の5色・上級は日付
 { const sw = readFileSync(path.join(root, "sw.js"), "utf8"), mf = JSON.parse(readFileSync(path.join(root, "manifest.webmanifest"), "utf8"));
   const shell = JSON.parse(sw.match(/SHELL = (\[[^\]]+\])/)[1].replace(/'/g, '"'));
   const need = ["./index.html", "./data.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
+  check("PWA：ネットの返事の保存は、イベントの中で waitUntil に預ける（遅れて届いた新しい版も保存できる）", /e\.waitUntil\(net\.then/.test(sw) && !/\.then\([^\n]*e\.waitUntil/.test(sw));
   check("PWA：sw.js は画面のファイルを全部保存し、外へ何も送らない", need.every((f) => shell.includes(f)) && !/https?:\/\//.test(sw.replace(/^\/\/.*$/gm, "")));
   check("PWA：manifest にアイコン2つと名前がある", mf.name === "重ね染め" && mf.icons.length >= 2 && mf.start_url === "./"); }
 
@@ -209,6 +210,19 @@ try {
     await pb.click("#back");
     check("保存できないブラウザでも、遊び方が何度も開かない", !(await pb.locator("#howto[open]").count()));
     await pb.close(); }
+  { // 前の記録が残っていて、書き込みだけ失敗する（容量いっぱいなど）ときも、メモリの新しい進み具合を使う
+    const pq = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    pq.on("pageerror", (e) => errors.push(e.message));
+    await pq.addInitScript(() => { const orig = Storage.prototype.setItem; orig.call(localStorage, "kasane-v1", JSON.stringify({ v: 1, tut: true, days: {}, hdays: {}, dex: {}, kofi: {}, runs: {} })); Storage.prototype.setItem = () => { throw new Error("full"); }; });
+    await pq.goto(url); await pq.click("#go-d");
+    check("前の記録があり書き込みだけ失敗しても、今日の1問目が始まる", (await pq.textContent("header")).includes("1/5"));
+    await pq.close(); }
+  { // 0時の前に最後の1問を終えて閉じ、翌日に開いても、終えた日の記録として残る
+    const pn = await newPage();
+    await pn.evaluate(() => { const g = window.__kz, k = new Date(Date.parse(g.todayKey()) - 864e5).toISOString().slice(0, 10); localStorage.setItem("kasane-v1", JSON.stringify({ v: 1, tut: true, days: {}, hdays: {}, dex: {}, kofi: {}, runs: { d: { mode: "d", date: k, list: g.dailyList(k), res: [0, 1, 2, 3, 4].map(() => ({ n: [1, 0, 0, 0], p: 90 })) } } })); });
+    await pn.reload();
+    check("前の日に5色を終えて閉じても、翌日に開くとその日の記録がつく", await pn.evaluate(() => { const g = window.__kz, k = new Date(Date.parse(g.todayKey()) - 864e5).toISOString().slice(0, 10); return !!g.load().days[k] && !g.load().runs.d; }));
+    await pn.close(); }
   { // 最後の1問を終えて「結果を見る」を押す前に閉じた日は、開き直すと結果へ進み記録がつく
     const pc = await newPage();
     await pc.evaluate(() => { const g = window.__kz, k = g.todayKey(); localStorage.setItem("kasane-v1", JSON.stringify({ v: 1, tut: true, days: {}, hdays: {}, dex: {}, cnt: 0, clean: 0, kofi: {}, runs: { d: { mode: "d", date: k, list: g.dailyList(k), res: [0, 1, 2, 3, 4].map(() => ({ n: [1, 0, 0, 0], p: 90 })) } } })); });
