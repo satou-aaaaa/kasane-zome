@@ -317,7 +317,7 @@ try {
   { // 時計を10日進めて、あとから遊ぶ（今日の記録・連続の日・Ko-fi・シェアには数えない。色帳には載る。今日の途中経過を消さない）
     const pl = await browser.newPage({ viewport: { width: 390, height: 844 } });
     pl.on("pageerror", (e) => errors.push(e.stack));
-    await pl.addInitScript(() => { const RD = Date, off = 10 * 864e5; window.Date = class extends RD { constructor(...a) { if (a.length) super(...a); else super(RD.now() + off); } static now() { return RD.now() + off; } }; });
+    await pl.addInitScript(() => { const RD = Date, off = Date.parse("2026-11-20T03:00:00Z") - RD.now(); /* 決まった日にする（今日から何日後だと、月をまたぐ日に失敗する。2026-11-04 天気図よみで CodeRabbit が指摘） */ window.Date = class extends RD { constructor(...a) { if (a.length) super(...a); else super(RD.now() + off); } static now() { return RD.now() + off; } }; });
     await pl.goto(url);
     const set = await pl.evaluate(() => { const g = window.__kz, k = g.todayKey(), add = (n) => new Date(Date.parse(k) + n * 864e5).toISOString().slice(0, 10), rec = { p: [90, 90, 90, 90, 90], n: [[1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0]] };
       const s = { v: 1, tut: true, days: { [add(-1)]: rec }, hdays: {}, late: {}, dex: {}, kofi: {}, runs: { d: { mode: "d", date: k, list: g.dailyList(k), res: [{ n: [1, 0, 0, 0], p: 50 }], id: "today" } } };
