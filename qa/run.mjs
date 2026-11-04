@@ -243,6 +243,7 @@ try {
     check("結果を見る前に別のタブが次の日を保存しても、終えた日の記録を残す", await pn.evaluate((K) => { const g = window.__kz, s0 = g.load(); const base = { mode: "d", date: "2000-01-01", list: [1, 2, 3], tags: [1, 2, 3], id: "x", res: [], i: 0, hints: [0, 0, 0] }, done = Object.assign({}, base, { res: [0, 1, 2].map(() => ({ m: 0, g: 1, h: 0, f: 0, p: 90, n: 1 })), i: 3 }); mem = JSON.stringify(Object.assign({}, s0, { t: 5, runs: { d: done } })); localStorage.setItem(K, JSON.stringify(Object.assign({}, s0, { t: 9, runs: { d: Object.assign({}, base, { date: "2000-01-02" }) } }))); const r = g.load(); mem = null; return !!r.days["2000-01-01"] && r.runs.d.date === "2000-01-02"; }, "kasane-v1"));
     check("同じ問題の練習をやり直したら、前の回（終えたもの）と取り違えず新しい回を使う", await pn.evaluate((K) => { const g = window.__kz, s0 = g.load(), base = { mode: "p", date: "2000-01-01", list: [1], tags: [1], res: [], i: 0, hints: [] }; mem = JSON.stringify(Object.assign({}, s0, { t: 9, runs: { p: Object.assign({}, base, { id: "new" }) } })); localStorage.setItem(K, JSON.stringify(Object.assign({}, s0, { t: 5, runs: { p: Object.assign({}, base, { id: "old", res: [{}], i: 1 }) } }))); const r = g.load(); mem = null; return r.runs.p.id === "new"; }, "kasane-v1"));
     check("保存に失敗したあと別のタブが保存しても、帳の★は高いほうを残す", await pn.evaluate((K) => { const g = window.__kz, s0 = g.load(); mem = JSON.stringify(Object.assign({}, s0, { t: 5, dex: { zz: 3 } })); localStorage.setItem(K, JSON.stringify(Object.assign({}, s0, { t: 9, dex: { zz: 1 } }))); const r = g.load(); mem = null; return r.dex.zz === 3; }, "kasane-v1"));
+    check("保存に失敗したあと、どちらの側が古い形（late・ach などが無い）でも、新しい記録の置き場を失わない", await pn.evaluate((K) => { const g = window.__kz, s0 = g.load(), old = { v: 1, tut: true, days: s0.days, hdays: {}, dex: {}, kofi: {}, runs: {} }, neu = Object.assign({}, old, { late: { "2000-01-03": { p: [90], n: [[1, 0, 0, 0]] } }, ach: { first: 1 }, apark: { "2000-01-04": { mode: "a", date: "2000-01-04", list: [1], res: [], id: "p" } } }); const put = (m, l) => { mem = JSON.stringify(m); localStorage.setItem(K, JSON.stringify(l)); const r = g.load(); mem = null; return r; }; const ok = (r) => !!r.late["2000-01-03"] && r.ach.first === 1 && !!(r.apark || {})["2000-01-04"]; const r1 = put(Object.assign({ t: 9 }, old), Object.assign({ t: 5 }, neu)), r2 = put(Object.assign({ t: 5 }, neu), Object.assign({ t: 9 }, old)); localStorage.setItem(K, JSON.stringify(s0)); return ok(r1) && ok(r2); }, "kasane-v1"));
     check("時計が戻っても、保存の時刻 t は前より大きくなる", await pn.evaluate((K) => { const s0 = JSON.parse(localStorage.getItem(K)); const far = Date.now() + 1e9; localStorage.setItem(K, JSON.stringify(Object.assign({}, s0, { t: far }))); save(() => {}); return JSON.parse(localStorage.getItem(K)).t > far; }, "kasane-v1"));
     await pn.close(); }
   { // 最後の1問を終えて「結果を見る」を押す前に閉じた日は、開き直すと結果へ進み記録がつく
@@ -266,11 +267,19 @@ try {
     check("決めたあと、目盛りと見立ての一言が出る", (await pv.locator(".verdict .meter").count()) === 1 && /見立て：/.test(await pv.textContent(".verdict .note")));
     await pv.click("#next");
     check("次の色では、また見立てを使える", !(await pv.locator(".mitate").count()) && (await pv.textContent("#mitate")) === "見立て");
+    // 別のタブで同じ色の見立てを使っていたら、この画面ではもう使えない（2026-11-04 CodeRabbit）
+    await pv.click('.vat[data-k="1"]'); await pv.waitForTimeout(260);
+    await pv.evaluate(() => { const s = JSON.parse(localStorage.getItem("kasane-v1")); s.runs.d.hint = 1; localStorage.setItem("kasane-v1", JSON.stringify(s)); });
+    await pv.click("#mitate");
+    check("別のタブで同じ色の見立てを使っていたら、古い画面では二度目を出さない", (await pv.locator(".mitate").count()) === 0 && (await pv.textContent("#mitate")) === "見立て済");
+    await pv.click("#reset");
     for (let i = 1; i < 5; i++) { await dyeRecipe(pv); await pv.waitForTimeout(260); await pv.click("#decide"); if (i === 1) check("お手本どおり（100%）に染めると「ぴたり」が出る", (await pv.locator(".pitari").count()) === 1); await pv.click("#next"); }
     const rec = await pv.evaluate(() => { const g = window.__kz; return g.load().days[g.todayKey()]; });
-    check("見立てを使った色は、日ごとの記録に印（h）が残る", JSON.stringify(rec.h) === "[1,0,0,0,0]", JSON.stringify(rec.h));
+    check("見立てを使った色は、日ごとの記録に印（h）が残る", JSON.stringify(rec.h) === "[1,1,0,0,0]", JSON.stringify(rec.h));
     await pv.click("#back"); await pv.click("#go-h");
     check("上級（記憶染め）には見立てが無い", (await pv.locator("#mitate").count()) === 0);
+    await pv.click("#memo"); await pv.click('.vat[data-k="3"]'); await pv.click("#decide");
+    check("上級の決めたあとにも「見立て：」は出さない（2026-11-04 CodeRabbit）", !(await pv.textContent(".verdict")).includes("見立て"));
     await pv.close(); }
 
   // 10. 実績：いまの記録から数える・10〜14こ・まだのものは進み具合・取れたら結果に小さく1回だけ
@@ -335,6 +344,24 @@ try {
     check("カレンダー：あとから遊んだ日は別の印（点線）で、もう押せない", (await pl.locator(".cal .c.late").count()) === 1 && (await pl.locator(`.cal button[data-d="${set.miss}"]`).count()) === 0);
     await pl.evaluate(() => { startRun("a", "2000-01-01"); });
     check("7日より前の日は、あとからでも始めない", (await pl.evaluate(() => window.__kz.load().runs.a)) == null && (await pl.locator(".cal").count()) === 1);
+    { // A日を途中→B日を始める→A日に戻ると続きから（あとからの途中経過は日付ごとに預ける。2026-11-04 星座つなぎで CodeRabbit が指摘）
+      const ab = await pl.evaluate(() => { const g = window.__kz, k = g.todayKey(), add = (n) => new Date(Date.parse(k) + n * 864e5).toISOString().slice(0, 10); return { A: add(-4), B: add(-5) }; });
+      await pl.click("#back"); await pl.click("#go-cal");
+      await pl.click(`.cal button.c.miss[data-d="${ab.A}"]`); await pl.click('.vat[data-k="0"]'); await pl.click("#decide"); await pl.click("#next");
+      await pl.click("#back"); await pl.click("#go-cal");
+      await pl.click(`.cal button.c.miss[data-d="${ab.B}"]`);
+      const midB = await pl.evaluate(() => { const r = window.__kz.load().runs.a; return { date: r.date, n: r.res.length }; });
+      await pl.click("#back"); await pl.click("#go-cal");
+      const lab = await pl.textContent(`.cal button.c.miss[data-d="${ab.A}"]`);
+      await pl.click(`.cal button.c.miss[data-d="${ab.A}"]`);
+      const backA = await pl.evaluate(() => { const r = window.__kz.load().runs.a; return { date: r.date, n: r.res.length }; });
+      check("あとから：A日を途中→B日を始める→A日に戻ると続きから（2色目）", midB.date === ab.B && midB.n === 0 && lab.includes("続き") && backA.date === ab.A && backA.n === 1 && (await pl.textContent("header")).includes("2/5"), JSON.stringify({ midB, backA, lab }));
+      await pl.click("#back"); await pl.click("#go-cal");
+      // 途中の日を別のタブで終えていたら（もう取りこぼしでない日）、続きからでも始めない（2026-11-04 CodeRabbit）
+      await pl.evaluate((A) => { const s = JSON.parse(localStorage.getItem("kasane-v1")); s.late[A] = { p: [90, 90, 90, 90, 90], n: [] }; localStorage.setItem("kasane-v1", JSON.stringify(s)); startRun("a", A); }, ab.A);
+      check("あとから：その日をもう遊んだ（別のタブ）なら、同じ日の続きでも始めない", (await pl.locator(".cal").count()) === 1 && (await pl.locator("#vats").count()) === 0);
+      await pl.evaluate((A) => { const s = JSON.parse(localStorage.getItem("kasane-v1")); delete s.late[A]; s.runs.a = null; s.apark = {}; localStorage.setItem("kasane-v1", JSON.stringify(s)); }, ab.A);
+      await pl.click("#back"); await pl.click("#go-cal"); }
     if (!(await pl.locator("#prev").isDisabled())) { await pl.click("#prev"); check("カレンダーは前の月へ戻れる", (await pl.locator(".cal .c").count()) >= 28); }
     await pl.close(); }
   { // 連続の日は1以上のときだけ出す（休んだ日を責めない）

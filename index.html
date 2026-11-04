@@ -272,14 +272,15 @@ const hardList = (k) => pick(seedOf(k + "h"), true, dailyList(k));
 // ---- 記録（この端末の localStorage だけ）----
 // 進行中の遊びはモードごとに分けて持つ（練習を始めても今日の5色・上級の途中経過を消さない）
 // late：取りこぼした日をあとから遊んだ記録（days とは別。連続日数・今日の記録には数えない）・ach：結果の画面で知らせ終えた実績
-const fresh = () => ({ v: 1, days: {}, hdays: {}, late: {}, dex: {}, runs: {}, tut: false, kofi: {}, ach: {} });
+// apark：あとからの途中経過を日付ごとに預ける（別の日を始めても消さない）
+const fresh = () => ({ v: 1, days: {}, hdays: {}, late: {}, dex: {}, runs: {}, tut: false, kofi: {}, ach: {}, apark: {} });
 const BOOK = { d: "days", h: "hdays", a: "late" }; // モードごとの日ごとの記録の置き場（練習 p は無し）
 let MODE = "d";
 let mem = null; // 保存できない環境（保存を切ったブラウザなど）では、開いているあいだだけここに置く
 const doneOf = (r) => !!r && r.res.length >= r.list.length, recOf = (r) => ({ p: r.res.map((x) => x.p), n: r.res.map((x) => x.n), h: r.res.map((x) => (x.h ? 1 : 0)) }); // h：見立てを使った色
 // 終わった今日・上級の回を日ごとの記録に入れる（結果を見る前に別のタブが次の日を保存しても、終えた日を失わない）
 function bank(s, r) { const b = doneOf(r) && BOOK[r.mode] ? s[BOOK[r.mode]] : null; if (!b || b[r.date]) return false; b[r.date] = recOf(r); return true; }
-function load() { let a = null, b = null; try { b = JSON.parse(localStorage.getItem(KEY)); } catch (e) {} try { a = mem !== null ? JSON.parse(mem) : null; } catch (e) {} if (a && a.v !== 1) a = null; if (b && b.v !== 1) b = null; if (!a || !b) return Object.assign(fresh(), a || b || {}); const [n, o] = (a.t || 0) >= (b.t || 0) ? [a, b] : [b, a]; const s = Object.assign(fresh(), n); for (const k in o) { if (k === "runs" || k === "t") continue; const x = o[k], y = n[k]; if (x && y && typeof x === "object" && typeof y === "object") { s[k] = Object.assign({}, x, y); for (const q in x) if (typeof x[q] === "number" && typeof y[q] === "number") s[k][q] = Math.max(x[q], y[q]); } else if (typeof x === "number" && typeof y === "number") s[k] = Math.max(x, y); else if (x === true) s[k] = true; } const ra = a.runs || {}, rb = b.runs || {}, prog = (r) => (r.res ? r.res.length : r.i || 0) * 2 + (r.cur || r.path ? 1 : 0), idOf = (r) => JSON.stringify([r.list || r.tags || null, r.id || null]); s.runs = Object.assign({}, n.runs); for (const m of new Set([...Object.keys(ra), ...Object.keys(rb)])) { const x = ra[m], y = rb[m]; if (x === undefined || y === undefined) { if (x || y) s.runs[m] = x || y; continue; } if (!x || !y) { const r = x || y; if (!r || bank(s, r) || doneOf(r)) continue; const bd = BOOK[r.mode] ? s[BOOK[r.mode]] : null; if (bd && !bd[r.date]) s.runs[m] = r; continue; } if (x.date !== y.date) { const [w, l] = x.date > y.date ? [x, y] : [y, x]; bank(s, l); s.runs[m] = w; } else if (idOf(x) === idOf(y)) { const px = prog(x), py = prog(y); s.runs[m] = px > py ? x : py > px ? y : n.runs[m]; } } return s; } // 保存に失敗したあとはメモリと保存の両方を読み、記録（日ごとの結果・帳など）は合わせ、途中経過は新しい方（t が大きい方）を使う
+function load() { let a = null, b = null; try { b = JSON.parse(localStorage.getItem(KEY)); } catch (e) {} try { a = mem !== null ? JSON.parse(mem) : null; } catch (e) {} if (a && a.v !== 1) a = null; if (b && b.v !== 1) b = null; if (!a || !b) return Object.assign(fresh(), a || b || {}); a = Object.assign(fresh(), a); b = Object.assign(fresh(), b); /* どちらかが古い形（late・ach などが無い）でも、合わせる前に補って新しい置き場を失わない */ const [n, o] = (a.t || 0) >= (b.t || 0) ? [a, b] : [b, a]; const s = Object.assign(fresh(), n); for (const k in o) { if (k === "runs" || k === "t") continue; const x = o[k], y = n[k]; if (x && y && typeof x === "object" && typeof y === "object") { s[k] = Object.assign({}, x, y); for (const q in x) if (typeof x[q] === "number" && typeof y[q] === "number") s[k][q] = Math.max(x[q], y[q]); } else if (typeof x === "number" && typeof y === "number") s[k] = Math.max(x, y); else if (x === true) s[k] = true; } const ra = a.runs || {}, rb = b.runs || {}, prog = (r) => (r.res ? r.res.length : r.i || 0) * 2 + (r.cur || r.path ? 1 : 0), idOf = (r) => JSON.stringify([r.list || r.tags || null, r.id || null]); s.runs = Object.assign({}, n.runs); for (const m of new Set([...Object.keys(ra), ...Object.keys(rb)])) { const x = ra[m], y = rb[m]; if (x === undefined || y === undefined) { if (x || y) s.runs[m] = x || y; continue; } if (!x || !y) { const r = x || y; if (!r || bank(s, r) || doneOf(r)) continue; const bd = BOOK[r.mode] ? s[BOOK[r.mode]] : null; if (bd && !bd[r.date]) s.runs[m] = r; continue; } if (x.date !== y.date) { const [w, l] = x.date > y.date ? [x, y] : [y, x]; bank(s, l); s.runs[m] = w; } else if (idOf(x) === idOf(y)) { const px = prog(x), py = prog(y); s.runs[m] = px > py ? x : py > px ? y : n.runs[m]; } } return s; } // 保存に失敗したあとはメモリと保存の両方を読み、記録（日ごとの結果・帳など）は合わせ、途中経過は新しい方（t が大きい方）を使う
 // 保存の前に読み直す（別のタブで進めた記録を消さない）
 function save(fn) { const s = load(); fn(s); s.t = Math.max(Date.now(), (s.t || 0) + 1); const j = JSON.stringify(s); try { localStorage.setItem(KEY, j); mem = null; } catch (e) { mem = j; } return s; }
 function streak(days) {
@@ -370,8 +371,16 @@ function startRun(mode, only) {
   const k = mode === "a" ? only : todayKey(); // あとから（a）は only に遊ぶ日を渡す
   let gone = false;
   save((s) => {
+    if (mode === "a") { // あとから：期限と「もう遊んだ日」を、続きからより先に確かめる
+      const miss = missedDays(s);
+      for (const d in s.apark) if (!miss.includes(d)) delete s.apark[d]; // 期限が過ぎた・もう遊んだ日の預かりは捨てる
+      if (!miss.includes(k)) { gone = true; return; } // 7日より前・もう遊んだ日（別のタブ）は始めない
+      const ra = s.runs.a;
+      if (ra && ra.date === k) return; // 続きから
+      if (ra && !doneOf(ra) && miss.includes(ra.date)) s.apark[ra.date] = ra; // 途中の日は預ける（別の日を始めても消さない）
+      if (s.apark[k]) { s.runs.a = s.apark[k]; delete s.apark[k]; return; } // 預けた日に戻ったら続きから
+    }
     if (mode !== "p" && s.runs[mode] && s.runs[mode].date === k) return; // 続きから
-    if (mode === "a" && !missedDays(s).includes(k)) { gone = true; return; } // 7日より前・もう遊んだ日（別のタブ）は始めない
     if ((mode === "d" && s.days[k]) || (mode === "h" && s.hdays[k])) return; // 別のタブで今日の分を終えていたら、もう一度は始めない（ホームに戻る）
     let list;
     if (mode === "d" || mode === "a") list = dailyList(k); // あとからも、その日の今日の5色と同じ（日付の種）
@@ -425,7 +434,8 @@ function play() {
   if ($("mitate")) $("mitate").onclick = () => { // 見立て：1色に1回、今の布と見本のちがいを一言で
     if (cur.h || cur.decided || !total()) return;
     let ok = true;
-    save((s2) => { const r = s2.runs[MODE]; if (!r || r.id !== cur.id || r.res.length !== i) { ok = false; return; } r.hint = i; });
+    save((s2) => { const r = s2.runs[MODE]; if (!r || r.id !== cur.id || r.res.length !== i) { ok = false; return; } if (r.hint === i) { ok = null; return; } r.hint = i; }); // 別のタブで同じ色の見立てを使っていたら、二度目は出さない
+    if (ok === null) { cur.h = true; toast("この色の見立ては使いました"); return paintCount(); }
     if (!ok) { toast("別の画面で先に進んでいます"); return play(); }
     cur.h = true; buzz();
     $("mitate-t").innerHTML = `<p class="mitate">見立て：<b>${adviceOf(cur.n, col)}</b></p>`;
@@ -474,7 +484,7 @@ function decide(col) {
     ${p >= 100 ? `<div class="pitari">ぴたり</div>` : ""}
     <div class="recipe">あなた ${recipeText(cur.n)}</div>
     <div class="recipe">お手本 ${D.VATS.map((v, k) => (best[k] ? `<span style="--dye:${dyeHex(D.VATS.map((_, j) => (j === k ? 5 : 0)))}"><i></i>${v.n} ${best[k]}</span>` : "")).join("")}</div>
-    <p class="note">${p >= 95 ? "ほぼ見本どおり。" : `${p >= 85 ? "近い色。もう一息。" : p >= 70 ? "同じ仲間の色。" : "お手本の重ね方を見てみよう。"}<br>見立て：${adviceOf(cur.n, col)}${[70, 85, 95][st] - p <= 15 ? `（★${st + 1}まであと${[70, 85, 95][st] - p}%）` : ""}`}</p>
+    <p class="note">${p >= 95 ? "ほぼ見本どおり。" : `${p >= 85 ? "近い色。もう一息。" : p >= 70 ? "同じ仲間の色。" : "お手本の重ね方を見てみよう。"}${MODE === "h" ? "" : `<br>見立て：${adviceOf(cur.n, col)}`}${[70, 85, 95][st] - p <= 15 ? `（★${st + 1}まであと${[70, 85, 95][st] - p}%）` : ""}`}</p>
     <button class="main" id="next">${last ? "結果を見る" : "次の色へ"}</button></div>`;
   $("next").onclick = play;
   if (p >= 100) { const m = $("mine"); m.classList.remove("glow"); void m.offsetWidth; m.classList.add("glow"); try { navigator.vibrate && navigator.vibrate([12, 60, 24]); } catch (e) {} }
@@ -573,7 +583,7 @@ function cal(ym) {
     const dk = `${ym}-${String(d).padStart(2, "0")}`, r = s.days[dk], l = s.late[dk], tcls = dk === k ? " today" : "", h = s.hdays[dk] ? " h" : "";
     if (r) { const lv = Array.isArray(r.p) ? Math.max(1, starsOf(avg(r.p))) : 1; cells += `<span class="c d${lv}${tcls}${h}" aria-label="${m}月${d}日 染めた">${d}<small>${"★".repeat(lv)}</small></span>`; }
     else if (l) cells += `<span class="c late${tcls}${h}" aria-label="${m}月${d}日 あとから染めた">${d}<small>あと</small></span>`;
-    else if (miss.includes(dk)) cells += `<button class="c miss${tcls}" data-d="${dk}" aria-label="${m}月${d}日の5色をあとから染める">${d}<small>${ra && ra.date === dk ? "続き" : "↺"}</small></button>`;
+    else if (miss.includes(dk)) cells += `<button class="c miss${tcls}" data-d="${dk}" aria-label="${m}月${d}日の5色をあとから染める">${d}<small>${(ra && ra.date === dk) || s.apark[dk] ? "続き" : "↺"}</small></button>`;
     else cells += `<span class="c${tcls}${h}">${d}</span>`;
   }
   app.innerHTML = `
@@ -581,7 +591,7 @@ function cal(ym) {
     <div class="calh"><button class="icon" id="prev" aria-label="前の月"${ym <= first ? " disabled" : ""}>‹</button><b>${y}年${m}月</b><button class="icon" id="next" aria-label="次の月"${ym >= last ? " disabled" : ""}>›</button></div>
     <div class="cal">${["日", "月", "火", "水", "木", "金", "土"].map((w) => `<span class="wd">${w}</span>`).join("")}${cells}</div>
     <div class="legend"><span><i style="background:var(--gold)"></i>染めた日（濃いほど★）</span><span><i style="border:1px dashed var(--gold)"></i>あとから染めた</span>${miss.length ? `<span><i style="border:1px dashed var(--muted)"></i>↺ 染められる</span>` : ""}</div>
-    ${miss.length ? `<p class="note">↺ の日は、あとから染められます（7日前まで・連続の日には入りません）</p><div class="row">${miss.slice(0, 2).map((d) => `<button class="sub" data-d="${d}">${md(d)}の5色${ra && ra.date === d ? "の続き" : ""}</button>`).join("")}</div>` : ""}
+    ${miss.length ? `<p class="note">↺ の日は、あとから染められます（7日前まで・連続の日には入りません）</p><div class="row">${miss.slice(0, 2).map((d) => `<button class="sub" data-d="${d}">${md(d)}の5色${(ra && ra.date === d) || s.apark[d] ? "の続き" : ""}</button>`).join("")}</div>` : ""}
     ${footer()}`;
   $("back").onclick = home;
   if ($("prev")) $("prev").onclick = () => cal(prev);
