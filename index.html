@@ -40,7 +40,6 @@ h1{font-family:var(--f-disp);font-weight:800;font-size:22px;margin:0;letter-spac
 h1 small{font-family:var(--f-body);font-size:12px;letter-spacing:0;color:var(--muted);margin-left:8px;font-weight:500}
 .icon{all:unset;cursor:pointer;font-size:18px;min-width:44px;height:44px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--line);box-sizing:border-box;padding:0 8px}
 .icon:disabled{opacity:.3;cursor:default}
-.icon:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .dots{display:flex;gap:6px;flex:1;max-width:160px}
 .dots i{flex:1;height:6px;border-radius:3px;background:var(--line)}
 .dots i.on{background:var(--gold)}.dots i.done{background:var(--paper)}
@@ -173,6 +172,8 @@ button.sub.newach{border-color:var(--gold);font-size:14px;animation:up .4s ease-
 footer{margin-top:auto;text-align:center;font-size:12px;color:var(--muted);display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
 footer a{color:var(--muted);min-height:44px;display:inline-flex;align-items:center}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* all:unset のボタン（カレンダーのます目など）でも枠が消えないよう、いちばん最後に強く書く（2026-11-04 CodeRabbit） */
+:is(.icon,button,a):focus-visible{outline:2px solid var(--gold)!important;outline-offset:2px}
 </style>
 </head>
 <body>
