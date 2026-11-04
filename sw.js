@@ -1,7 +1,7 @@
 // 重ね染めを端末に保存して、電波が無くても遊べるようにする（PWA）。
 // 画面は先にネットを見て、つながらないときだけ保存したものを使う（直した版がすぐ届く）。
 // 記録（localStorage）には触らない。外へ何も送らない（よそのサイト＝文字の取り寄せは扱わない）。
-const CACHE = "kasane-v3";
+const CACHE = "kasane-v4";
 const SHELL = ["./", "./index.html", "./data.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (e) => {
@@ -24,7 +24,7 @@ self.addEventListener("fetch", (e) => {
   // つながったまま返事が来ないときは、4秒で保存したものに切り替える（保存が無ければネットを待つ）
   // ネットの返事と保存し直しは、イベントの中で waitUntil に預ける（4秒で保存したものを返したあとに届いても、新しい版を保存できる）
   const net = fetch(req);
-  e.waitUntil(net.then((res) => { if (!res.ok) return; const copy = res.clone(); return caches.open(CACHE).then((c) => c.put(req, copy)); }, () => {}).catch(() => {})); // 保存の失敗（容量いっぱいなど）は無視する
+  e.waitUntil(Promise.race([net.then((res) => { if (!res.ok) return; const copy = res.clone(); return caches.open(CACHE).then((c) => c.put(req, copy)); }, () => {}).catch(() => {}), new Promise((r) => setTimeout(r, 15000))])); // 保存の失敗（容量いっぱいなど）は無視し、通信が止まっても15秒で待つのをやめる（次の版の切り替えを止めない）
   e.respondWith(new Promise((resolve) => {
     let sent = false; const send = (r) => { if (!sent) { sent = true; resolve(r); } };
     const slow = setTimeout(() => fromCache().then((hit) => hit && send(hit)), 4000);

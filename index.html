@@ -417,7 +417,7 @@ function result(mode, k, prun, first) {
   $("back").onclick = home;
   $("go-p").onclick = () => startRun("p");
   $("go-dex").onclick = dex;
-  if ($("go-h")) $("go-h").onclick = () => startRun("h");
+  if ($("go-h")) $("go-h").onclick = () => (k === todayKey() ? startRun("h") : home()); // 画面を開いたまま0時を過ぎたら、翌日の上級は始めない
   if (mode !== "p") {
     const withUrl = text + "\n" + SITE;
     $("toX").href = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(withUrl);
