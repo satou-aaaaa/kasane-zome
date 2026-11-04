@@ -167,6 +167,11 @@ try {
   // 6. 練習と色帳
   const before = await page.evaluate(() => Object.keys(window.__kz.load().days).length);
   await page.click("#go-p");
+  // 別のタブで練習を作り直していたら、古い練習の画面の答えは新しい練習に入れない
+  await page.evaluate(() => { const s = JSON.parse(localStorage.getItem("kasane-v1")); s.runs.p.id = "other-tab"; s.runs.p.list = s.runs.p.list.slice().reverse(); localStorage.setItem("kasane-v1", JSON.stringify(s)); });
+  await page.click('.vat[data-k="3"]'); await page.click("#decide");
+  check("別のタブで練習を作り直していたら、古い練習の答えは入れない", (await page.evaluate(() => window.__kz.load().runs.p.res.length)) === 0);
+  await page.click("#back"); await page.click("#go-p");
   for (let i = 0; i < 5; i++) { await page.click('.vat[data-k="3"]'); await page.click("#decide"); await page.click("#next"); }
   check("練習は今日の記録を増やさず、シェアと Ko-fi を出さない", (await page.evaluate(() => Object.keys(window.__kz.load().days).length)) === before && (await page.locator(".kofi, #share").count()) === 0);
   await page.click("#go-dex");

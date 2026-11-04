@@ -286,7 +286,7 @@ function startRun(mode, only) {
     else if (mode === "h") list = hardList(k);
     else if (only != null) list = [only];
     else { const pool = D.COLORS.map((_, i) => i); for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; } list = pool.slice(0, PER); }
-    s.runs[mode] = { mode, date: k, list, res: [] };
+    s.runs[mode] = { mode, date: k, list, res: [], id: Date.now() + "-" + performance.now().toFixed(3) };
   });
   MODE = mode;
   play();
@@ -301,7 +301,7 @@ function play() {
   const col = D.COLORS[run.list[i]];
   // 上級で「覚えた」を押した色は、開き直しても見本を隠したまま
   const memo = run.mode === "h" && run.memo === i;
-  cur = { n: [0, 0, 0, 0], hist: [], shown: run.mode !== "h" || memo, decided: false, i, date: run.date };
+  cur = { n: [0, 0, 0, 0], hist: [], shown: run.mode !== "h" || memo, decided: false, i, date: run.date, id: run.id };
   const label = run.mode === "d" ? `今日の5色` : run.mode === "h" ? "上級" : "練習";
   app.innerHTML = `
     <header><button class="icon" id="back" aria-label="もどる">←</button>
@@ -355,7 +355,7 @@ function decide(col) {
   const s = save((s) => {
     const r = s.runs[MODE];
     // 別のタブで先に進んでいたら、この画面の答えは入れない（同じ色の答えが2つにならないように）
-    if (!r || r.date !== cur.date || r.res.length !== cur.i) { stale = true; return; }
+    if (!r || r.date !== cur.date || r.id !== cur.id || r.res.length !== cur.i) { stale = true; return; }
     r.res.push({ n: cur.n.slice(), p });
     s.dex[col.n] = Math.max(s.dex[col.n] || 0, st);
   });
