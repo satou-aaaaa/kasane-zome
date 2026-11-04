@@ -45,7 +45,7 @@ check("Math.random は練習の色選びだけ（今日の5色・上級は日付
 { const sw = readFileSync(path.join(root, "sw.js"), "utf8"), mf = JSON.parse(readFileSync(path.join(root, "manifest.webmanifest"), "utf8"));
   const shell = JSON.parse(sw.match(/SHELL = (\[[^\]]+\])/)[1].replace(/'/g, '"'));
   const need = ["./index.html", "./data.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
-  check("PWA：ネットの返事の保存は、イベントの中で waitUntil に預ける（遅れて届いた新しい版も保存できる）", /e\.waitUntil\(net\.then/.test(sw) && !/\.then\([^\n]*e\.waitUntil/.test(sw));
+  check("PWA：ネットの返事の保存は、イベントの中で waitUntil に預ける（遅れて届いた新しい版も保存できる）", /e\.waitUntil\(net\.then[^\n]*\.catch\(\(\) => \{\}\)\);/.test(sw) && !/\.then\([^\n]*e\.waitUntil/.test(sw));
   check("PWA：sw.js は画面のファイルを全部保存し、外へ何も送らない", need.every((f) => shell.includes(f)) && !/https?:\/\//.test(sw.replace(/^\/\/.*$/gm, "")));
   check("PWA：manifest にアイコン2つと名前がある", mf.name === "重ね染め" && mf.icons.length >= 2 && mf.start_url === "./"); }
 
@@ -222,6 +222,8 @@ try {
     await pn.evaluate(() => { const g = window.__kz, k = new Date(Date.parse(g.todayKey()) - 864e5).toISOString().slice(0, 10); localStorage.setItem("kasane-v1", JSON.stringify({ v: 1, tut: true, days: {}, hdays: {}, dex: {}, kofi: {}, runs: { d: { mode: "d", date: k, list: g.dailyList(k), res: [0, 1, 2, 3, 4].map(() => ({ n: [1, 0, 0, 0], p: 90 })) } } })); });
     await pn.reload();
     check("前の日に5色を終えて閉じても、翌日に開くとその日の記録がつく", await pn.evaluate(() => { const g = window.__kz, k = new Date(Date.parse(g.todayKey()) - 864e5).toISOString().slice(0, 10); return !!g.load().days[k] && !g.load().runs.d; }));
+    check("前の日の結果の画面からは、今日の上級を始められない（今日の分を先に）", !(await pn.locator("#go-h").count()));
+    check("保存に失敗したあと別のタブが新しく保存していたら、古いメモリで上書きせずそちらを読む", await pn.evaluate((K) => { const g = window.__kz, s0 = g.load(); mem = JSON.stringify(Object.assign({}, s0, { t: 1, tagA: 1 })); localStorage.setItem(K, JSON.stringify(Object.assign({}, s0, { t: 2, tagB: 1 }))); const r = g.load(); mem = null; return !!r.tagB && !r.tagA; }, "kasane-v1"));
     await pn.close(); }
   { // 最後の1問を終えて「結果を見る」を押す前に閉じた日は、開き直すと結果へ進み記録がつく
     const pc = await newPage();

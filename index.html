@@ -230,9 +230,9 @@ const hardList = (k) => pick(seedOf(k + "h"), true, dailyList(k));
 const fresh = () => ({ v: 1, days: {}, hdays: {}, dex: {}, runs: {}, tut: false, kofi: {} });
 let MODE = "d";
 let mem = null; // 保存できない環境（保存を切ったブラウザなど）では、開いているあいだだけここに置く
-function load() { try { const s = JSON.parse(mem !== null ? mem : localStorage.getItem(KEY)); if (s && s.v === 1) return Object.assign(fresh(), s); } catch (e) { if (mem) return Object.assign(fresh(), JSON.parse(mem)); } return fresh(); } // 保存に失敗したあとは、古い記録よりメモリの方が新しい
+function load() { let a = null, b = null; try { b = JSON.parse(localStorage.getItem(KEY)); } catch (e) {} try { a = mem !== null ? JSON.parse(mem) : null; } catch (e) {} const s = a && (!b || (a.t || 0) >= (b.t || 0)) ? a : b; return s && s.v === 1 ? Object.assign(fresh(), s) : fresh(); } // 保存に失敗したあとはメモリの方を使う。ただし別のタブがあとで保存できていたら、そちら（t が新しい方）を使う
 // 保存の前に読み直す（別のタブで進めた記録を消さない）
-function save(fn) { const s = load(); fn(s); const j = JSON.stringify(s); try { localStorage.setItem(KEY, j); mem = null; } catch (e) { mem = j; } return s; }
+function save(fn) { const s = load(); fn(s); s.t = Date.now(); const j = JSON.stringify(s); try { localStorage.setItem(KEY, j); mem = null; } catch (e) { mem = j; } return s; }
 function streak(days) {
   let k = todayKey(), n = 0;
   if (!days[k]) k = new Date(Date.parse(k) - 864e5).toISOString().slice(0, 10);
@@ -410,7 +410,7 @@ function result(mode, k, prun, first) {
     <button class="main" id="share">結果をシェア</button>
     <div class="shares"><a id="toX" target="_blank" rel="noopener">Xで投稿</a><a id="toLine" target="_blank" rel="noopener">LINEで送る</a><button id="copy">コピー</button></div>
     <p class="note">次の5色まで あと <b>${untilNext()}</b></p>` : ""}
-    ${mode === "d" && !s.hdays[k] ? `<button class="main" id="go-h" style="background:var(--paper);box-shadow:0 4px 0 #9b927f">上級：記憶染めに挑む</button>` : ""}
+    ${mode === "d" && k === todayKey() && !s.hdays[k] ? `<button class="main" id="go-h" style="background:var(--paper);box-shadow:0 4px 0 #9b927f">上級：記憶染めに挑む</button>` : ""}
     <div class="row"><button class="sub" id="go-p">${mode === "p" ? "もう一度練習" : "練習する"}</button><button class="sub" id="go-dex">色帳を見る</button></div>
     ${showKofi ? `<p class="note kofi">楽しめたら、<a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi でコーヒー1杯の応援</a>をもらえると、新しい色とゲームづくりの励みになります（任意・遊ぶのはずっと無料）。</p>` : ""}
     <p class="note"><a href="${FEEDBACK}" target="_blank" rel="noopener" id="fb">感想を送る</a></p>`;
