@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'">
+<title>重ね染め</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="藍・紅花・刈安・紫根の染め液を重ねて、見本の日本の伝統色を染める1日5色のゲーム。時間制限なし、3分で遊べます。">
+<meta name="theme-color" content="#11161f">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="重ね染め">
+<meta property="og:title" content="重ね染め：伝統色を染める1日5色">
+<meta property="og:description" content="染め液を重ねて、見本の伝統色をどこまで再現できる？ だれでも同じ1日5色、3分で遊べます。">
+<meta property="og:url" content="https://satou-aaaaa.github.io/kasane-zome/">
+<meta property="og:image" content="https://satou-aaaaa.github.io/kasane-zome/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="重ね染め：染め液を重ねて伝統色を染めるゲーム">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@700;800&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap">
+<style>
+/* 夜の染め場。藍鉄の地に和紙の生成り。布は左右とも同じ質感をのせ、色だけを比べられるようにする */
+:root{
+  --bg:#11161f; --bg2:#1d2838; --paper:#efe8da; --ink:#1d1a17; --gold:#d8b26a; --muted:#9aa3b2; --line:#ffffff24; --panel:#00000040;
+  --f-disp:"Shippori Mincho B1","Hiragino Mincho ProN","Yu Mincho",serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{margin:0;background-color:var(--bg);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"),radial-gradient(120% 70% at 50% 0%,var(--bg2),var(--bg) 70%);background-attachment:fixed;color:var(--paper);font-family:var(--f-body);font-weight:500;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:460px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 28px;display:flex;flex-direction:column;gap:14px;min-height:100%;box-sizing:border-box}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:44px}
+h1{font-family:var(--f-disp);font-weight:800;font-size:22px;margin:0;letter-spacing:.12em;color:var(--paper)}
+h1 small{font-family:var(--f-body);font-size:12px;letter-spacing:0;color:var(--muted);margin-left:8px;font-weight:500}
+.icon{all:unset;cursor:pointer;font-size:18px;min-width:44px;height:44px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--line);box-sizing:border-box;padding:0 8px}
+.icon:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.dots{display:flex;gap:6px;flex:1;max-width:160px}
+.dots i{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.dots i.on{background:var(--gold)}.dots i.done{background:var(--paper)}
+button.main,a.main{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;border-radius:12px;background:var(--gold);color:#241a08;font-weight:700;font-size:17px;padding:0 16px;text-align:center;box-shadow:0 4px 0 #8a6a2c}
+button.main:active{transform:translateY(2px);box-shadow:0 2px 0 #8a6a2c}
+button.main:disabled{opacity:.45;cursor:default}
+button.sub,a.sub{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--paper);font-weight:700;font-size:15px;padding:0 12px;text-align:center}
+button.sub:disabled{opacity:.4;cursor:default}
+.row{display:flex;gap:10px}.row>.sub,.row>.main{flex:1 1 0}
+.note{color:var(--muted);font-size:13px;line-height:1.6;margin:0;text-align:center}
+.note a{color:var(--gold)}
+/* 布 */
+.pole{height:8px;border-radius:4px;background:linear-gradient(#a07a4a,#5e4326);box-shadow:0 2px 0 #00000055;margin:0 -6px}
+.cloth{--col:#f6f3ec;position:relative;background-color:var(--col);transition:background-color .45s ease;clip-path:polygon(0 0,100% 0,100% 92%,88% 96%,75% 93%,62% 97%,50% 94%,37% 98%,25% 94%,12% 97%,0 93%);border-radius:2px}
+.cloth::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,#ffffff0d 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,#0000000d 0 1px,transparent 1px 3px)}
+.cloth::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#0000001f,transparent 16%,#ffffff12 38%,transparent 52%,#00000017 78%,transparent 92%,#0000001a)}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.sw{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+.sw .cloth{aspect-ratio:4/5}
+.sw .lab{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--muted)}
+.sw .lab b{font-family:var(--f-disp);font-size:20px;color:var(--paper);letter-spacing:.08em}
+.hidden-t{position:absolute;inset:0;display:grid;place-items:center;background:repeating-linear-gradient(45deg,#2a3546 0 10px,#243040 10px 20px);color:var(--muted);font-size:40px;font-family:var(--f-disp);z-index:2}
+.hidden-t[hidden]{display:none}
+.cloth.dip{animation:dip .6s ease-in-out}
+@keyframes dip{0%{transform:none}45%{transform:translateY(26px) scaleY(.94)}100%{transform:none}}
+.cloth.drip::marker{content:none}
+.count{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+.count .bar{flex:1;height:4px;background:var(--line);border-radius:2px;margin:0 10px;overflow:hidden}
+.count .bar i{display:block;height:100%;background:var(--gold);transition:width .3s}
+/* 染め液の桶 */
+.vats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.vat{all:unset;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;position:relative;min-height:44px}
+.vat .tub{width:100%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 50% 50%,#6b4b2b 0 62%,#3f2a16 63% 70%,#8a6640 71% 100%);display:grid;place-items:center;box-shadow:0 6px 0 #00000066,inset 0 0 0 2px #00000033}
+.vat .liq{width:76%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 38% 34%,#ffffff40,transparent 32%),var(--dye);box-shadow:inset 0 4px 10px #00000066;position:relative;overflow:hidden}
+.vat .liq::after{content:"";position:absolute;inset:-30%;border-radius:50%;border:2px solid #ffffff55;opacity:0;transform:scale(.2)}
+.vat.ripple .liq::after{animation:ripple .6s ease-out}
+@keyframes ripple{0%{opacity:.9;transform:scale(.2)}100%{opacity:0;transform:scale(1)}}
+.vat .nm{font-family:var(--f-disp);font-size:16px;letter-spacing:.06em}
+.vat .badge{position:absolute;top:-4px;right:-2px;min-width:24px;height:24px;border-radius:12px;background:var(--paper);color:var(--ink);font-weight:700;font-size:13px;display:grid;place-items:center;padding:0 4px;box-sizing:border-box}
+.vat .badge:empty{display:none}
+.vat:disabled,.vat[aria-disabled=true]{opacity:.4;cursor:default}
+.vat:active .tub{transform:translateY(2px)}
+/* 決めたあと */
+.verdict{background:var(--paper);color:var(--ink);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px;box-shadow:0 8px 0 #00000055;animation:up .35s ease-out}
+@keyframes up{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
+.verdict .pct{font-family:var(--f-disp);font-size:44px;font-weight:800;line-height:1;display:flex;align-items:baseline;justify-content:center;gap:10px}
+.verdict .pct small{font-size:16px}
+.stars{color:#c9932e;letter-spacing:.1em;font-size:22px}
+.stars .off{color:#0000002b}
+.recipe{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;font-size:14px}
+.recipe span{border-radius:999px;padding:4px 10px;background:#00000010;display:inline-flex;align-items:center;gap:6px}
+.recipe span i{width:12px;height:12px;border-radius:50%;background:var(--dye);display:inline-block}
+.verdict .note{color:#6f675d}
+/* ホーム */
+.hero{display:flex;gap:10px;justify-content:center;padding:6px 6px 0}
+.hero .h{width:26%;display:flex;flex-direction:column;gap:0;transform-origin:top center;animation:sway 5s ease-in-out infinite}
+.hero .h:nth-child(2){animation-delay:-1.6s}.hero .h:nth-child(3){animation-delay:-3.1s}
+.hero .h .cloth{aspect-ratio:3/5}
+@keyframes sway{0%,100%{transform:rotate(-1.2deg)}50%{transform:rotate(1.2deg)}}
+.title{font-family:var(--f-disp);font-weight:800;font-size:44px;letter-spacing:.2em;text-align:center;margin:8px 0 0}
+.lead{text-align:center;color:var(--muted);margin:0;font-size:14px;line-height:1.7}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stats div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center}
+.stats b{display:block;font-size:20px;font-family:var(--f-disp)}
+.stats small{color:var(--muted);font-size:12px}
+.rank{text-align:center;font-size:13px;color:var(--gold)}
+/* 結果 */
+.line{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.line .it{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px}
+.line .it .cloth{width:100%;aspect-ratio:2/3;background:linear-gradient(var(--col) 0 50%,var(--mine) 50% 100%)}
+.line .it b{font-family:var(--f-disp);font-size:13px;letter-spacing:.04em}
+.line .it .stars{font-size:11px;letter-spacing:0}
+.big{font-family:var(--f-disp);font-size:40px;text-align:center;margin:0}
+.share{background:var(--panel);border-radius:12px;padding:12px;white-space:pre-line;font-size:15px;line-height:1.6;text-align:center;border:1px solid var(--line)}
+.shares{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.shares a,.shares button{display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--paper);font-size:14px;font-weight:700;text-decoration:none;padding:0 6px;box-sizing:border-box;font-family:inherit;cursor:pointer}
+/* 色帳 */
+.dex{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.dex button{all:unset;cursor:pointer;display:flex;flex-direction:column;gap:4px;align-items:center;font-size:12px;min-height:44px}
+.dex .cloth{width:100%;aspect-ratio:1}
+.dex .unk{width:100%;aspect-ratio:1;border:1px dashed var(--line);border-radius:4px;display:grid;place-items:center;color:var(--muted);font-family:var(--f-disp);font-size:22px;box-sizing:border-box}
+.dex .stars{font-size:10px;letter-spacing:0}
+.sheet{background:var(--paper);color:var(--ink);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.sheet h3{margin:0;font-family:var(--f-disp);font-size:22px;letter-spacing:.08em}
+.sheet .sub{color:var(--ink);border-color:#00000022;background:#0000000a}
+/* 遊び方 */
+dialog{border:none;border-radius:16px;background:var(--paper);color:var(--ink);max-width:400px;width:calc(100% - 32px);padding:20px;box-sizing:border-box}
+dialog::backdrop{background:#000000aa}
+dialog h2{font-family:var(--f-disp);margin:0 0 10px;letter-spacing:.1em}
+dialog ol{padding-left:1.3em;margin:0 0 12px;line-height:1.8}
+dialog p{margin:0 0 10px;font-size:14px;line-height:1.7;color:#4d463d}
+dialog a{color:#7a5a1c}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--paper);color:var(--ink);padding:10px 16px;border-radius:10px;font-weight:700;z-index:9;box-shadow:0 6px 20px #0008}
+.hint{background:var(--panel);border:1px solid var(--gold);border-radius:12px;padding:10px 12px;font-size:14px;text-align:center}
+footer{margin-top:auto;text-align:center;font-size:12px;color:var(--muted);display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+footer a{color:var(--muted);min-height:44px;display:inline-flex;align-items:center}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<dialog id="howto" aria-labelledby="howto-t">
+  <h2 id="howto-t">遊び方</h2>
+  <ol>
+    <li>染め液の桶を押すと、布が1回染まります。</li>
+    <li>重ねるほど濃く、ちがう液を重ねると色がまざります。</li>
+    <li>見本と同じ色になったら「これで決める」。</li>
+  </ol>
+  <p>藍に刈安（黄）を重ねると緑になります。昔の緑もこうして染めました。時間制限はありません。</p>
+  <p>今日の5色はだれでも同じで、1日1回。練習は何度でも遊べます。</p>
+  <p><a id="fb2" target="_blank" rel="noopener">感想を送る</a></p>
+  <button class="main" id="howto-ok" style="width:100%">わかった</button>
+</dialog>
+<script src="data.js"></script>
+<script>
+"use strict";
+const D = window.KZ_DATA, $ = (id) => document.getElementById(id), app = $("app");
+const SITE = "https://satou-aaaaa.github.io/kasane-zome/";
+const FEEDBACK = "https://github.com/satou-aaaaa/kasane-zome/issues/new?template=feedback.yml";
+const KEY = "kasane-v1", PER = 5, EPOCH = "2026-11-04";
+
+// ---- 色の計算（tools/color.cjs と同じ式）----
+const lin = (v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
+const gam = (v) => { v = Math.max(0, Math.min(1, v)); return Math.round(255 * (v <= 0.0031308 ? 12.92 * v : 1.055 * v ** (1 / 2.4) - 0.055)); };
+const hex2rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const rgb2hex = (c) => "#" + c.map((v) => v.toString(16).padStart(2, "0")).join("");
+function lab(rgb) {
+  const [r, g, b] = rgb.map(lin);
+  const x = (r * 0.4124 + g * 0.3576 + b * 0.1805) / 0.95047, y = r * 0.2126 + g * 0.7152 + b * 0.0722, z = (r * 0.0193 + g * 0.1192 + b * 0.9505) / 1.08883;
+  const f = (t) => (t > 216 / 24389 ? Math.cbrt(t) : (24389 / 27 * t + 16) / 116);
+  return [116 * f(y) - 16, 500 * (f(x) - f(y)), 200 * (f(y) - f(z))];
+}
+function de2000(a, b) {
+  const [L1, a1, b1] = a, [L2, a2, b2] = b, rad = Math.PI / 180;
+  const C1 = Math.hypot(a1, b1), C2 = Math.hypot(a2, b2), Cm = (C1 + C2) / 2;
+  const G = 0.5 * (1 - Math.sqrt(Cm ** 7 / (Cm ** 7 + 25 ** 7)));
+  const ap1 = a1 * (1 + G), ap2 = a2 * (1 + G), Cp1 = Math.hypot(ap1, b1), Cp2 = Math.hypot(ap2, b2);
+  const hp = (x, y) => { if (x === 0 && y === 0) return 0; const h = Math.atan2(y, x) / rad; return h < 0 ? h + 360 : h; };
+  const hp1 = hp(ap1, b1), hp2 = hp(ap2, b2);
+  const dL = L2 - L1, dC = Cp2 - Cp1;
+  let dh = 0; if (Cp1 * Cp2 !== 0) { dh = hp2 - hp1; if (dh > 180) dh -= 360; else if (dh < -180) dh += 360; }
+  const dH = 2 * Math.sqrt(Cp1 * Cp2) * Math.sin(dh * rad / 2);
+  const Lm = (L1 + L2) / 2, Cpm = (Cp1 + Cp2) / 2;
+  let hm = hp1 + hp2; if (Cp1 * Cp2 !== 0) { if (Math.abs(hp1 - hp2) > 180) hm += hm < 360 ? 360 : -360; hm /= 2; }
+  const T = 1 - 0.17 * Math.cos((hm - 30) * rad) + 0.24 * Math.cos(2 * hm * rad) + 0.32 * Math.cos((3 * hm + 6) * rad) - 0.2 * Math.cos((4 * hm - 63) * rad);
+  const dT = 30 * Math.exp(-(((hm - 275) / 25) ** 2)), RC = 2 * Math.sqrt(Cpm ** 7 / (Cpm ** 7 + 25 ** 7));
+  const SL = 1 + 0.015 * (Lm - 50) ** 2 / Math.sqrt(20 + (Lm - 50) ** 2), SC = 1 + 0.045 * Cpm, SH = 1 + 0.015 * Cpm * T, RT = -Math.sin(2 * dT * rad) * RC;
+  return Math.sqrt((dL / SL) ** 2 + (dC / SC) ** 2 + (dH / SH) ** 2 + RT * (dC / SC) * (dH / SH));
+}
+const BASE_LIN = hex2rgb(D.BASE).map(lin);
+// 染めは掛け算なので、どの順に染めても同じ色になる（回数だけで決まる）
+const dyeHex = (n) => rgb2hex(BASE_LIN.map((v, i) => gam(v * D.VATS.reduce((m, V, k) => m * V.t[i] ** n[k], 1))));
+const deOf = (n, col) => de2000(lab(hex2rgb(dyeHex(n))), lab(hex2rgb(col.c)));
+// 一致度：お手本と同じ近さなら100%。お手本より色の差が1増えるごとに3%下がる
+const pctOf = (n, col) => Math.max(0, Math.min(100, Math.round(100 - Math.max(0, deOf(n, col) - col.d) * 3)));
+const starsOf = (p) => (p >= 95 ? 3 : p >= 85 ? 2 : p >= 70 ? 1 : 0);
+const starStr = (s) => `<span class="stars" aria-label="星${s}つ">${"★".repeat(s)}<span class="off">${"★".repeat(3 - s)}</span></span>`;
+const EMO = { red: "🟥", orange: "🟧", yellow: "🟨", green: "🟩", blue: "🟦", purple: "🟪", brown: "🟫", gray: "⬜" };
+
+// ---- 日付と乱数（日本時間。だれでも同じ5色）----
+const jstNow = () => new Date(Date.now() + 9 * 3600e3);
+const todayKey = () => jstNow().toISOString().slice(0, 10);
+const dayNo = (k) => Math.round((Date.parse(k) - Date.parse(EPOCH)) / 864e5) + 1;
+function seedOf(str) { let h = 2166136261; for (const ch of str) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+const vatsUsed = (c) => c.r.filter((x) => x > 0).length;
+// 5色を選ぶ：色の仲間を重ねない・やさしい色から並べる・2液以上の色を2つ以上。hard は3液以上を2つ以上、除く色は exclude
+function pick(seed, hard = false, exclude = []) {
+  const R = rng(seed);
+  for (let tries = 0; tries < 50; tries++) {
+    const idx = D.COLORS.map((_, i) => i).filter((i) => !exclude.includes(i) && (!hard || vatsUsed(D.COLORS[i]) >= 2));
+    for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(R() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+    const out = [], fam = new Set();
+    for (const i of idx) { if (out.length === PER) break; if (!fam.has(D.COLORS[i].f)) { fam.add(D.COLORS[i].f); out.push(i); } }
+    const multi = out.filter((i) => vatsUsed(D.COLORS[i]) >= (hard ? 3 : 2)).length;
+    if (out.length === PER && multi >= 2) {
+      const w = (i) => vatsUsed(D.COLORS[i]) * 20 + D.COLORS[i].r.reduce((s, x) => s + x, 0);
+      return out.sort((a, b) => w(a) - w(b));
+    }
+  }
+  throw new Error("5色を選べない");
+}
+const dailyList = (k) => pick(seedOf(k));
+const hardList = (k) => pick(seedOf(k + "h"), true, dailyList(k));
+
+// ---- 記録（この端末の localStorage だけ）----
+// 進行中の遊びはモードごとに分けて持つ（練習を始めても今日の5色・上級の途中経過を消さない）
+const fresh = () => ({ v: 1, days: {}, hdays: {}, dex: {}, runs: {}, tut: false, kofi: {} });
+let MODE = "d";
+let mem = null; // 保存できない環境（保存を切ったブラウザなど）では、開いているあいだだけここに置く
+function load() { let a = null, b = null; try { b = JSON.parse(localStorage.getItem(KEY)); } catch (e) {} try { a = mem !== null ? JSON.parse(mem) : null; } catch (e) {} if (a && a.v !== 1) a = null; if (b && b.v !== 1) b = null; if (!a || !b) return Object.assign(fresh(), a || b || {}); const [n, o] = (a.t || 0) >= (b.t || 0) ? [a, b] : [b, a]; const s = Object.assign(fresh(), n); for (const k in o) { if (k === "runs" || k === "t") continue; const x = o[k], y = n[k]; if (x && y && typeof x === "object" && typeof y === "object") { s[k] = Object.assign({}, x, y); for (const q in x) if (typeof x[q] === "number" && typeof y[q] === "number") s[k][q] = Math.max(x[q], y[q]); } else if (typeof x === "number" && typeof y === "number") s[k] = Math.max(x, y); else if (x === true) s[k] = true; } const ra = a.runs || {}, rb = b.runs || {}, prog = (r) => (r.res ? r.res.length : r.i || 0) * 2 + (r.cur || r.path ? 1 : 0), idOf = (r) => JSON.stringify([r.list || r.tags || null, r.id || null]); s.runs = Object.assign({}, n.runs); for (const m of new Set([...Object.keys(ra), ...Object.keys(rb)])) { const x = ra[m], y = rb[m]; if (!x || !y) continue; if (x.date !== y.date) s.runs[m] = x.date > y.date ? x : y; else if (idOf(x) === idOf(y)) s.runs[m] = prog(x) > prog(y) ? x : y; } return s; } // 保存に失敗したあとはメモリと保存の両方を読み、記録（日ごとの結果・帳など）は合わせ、途中経過は新しい方（t が大きい方）を使う
+// 保存の前に読み直す（別のタブで進めた記録を消さない）
+function save(fn) { const s = load(); fn(s); s.t = Math.max(Date.now(), (s.t || 0) + 1); const j = JSON.stringify(s); try { localStorage.setItem(KEY, j); mem = null; } catch (e) { mem = j; } return s; }
+function streak(days) {
+  let k = todayKey(), n = 0;
+  if (!days[k]) k = new Date(Date.parse(k) - 864e5).toISOString().slice(0, 10);
+  while (days[k]) { n++; k = new Date(Date.parse(k) - 864e5).toISOString().slice(0, 10); }
+  return n;
+}
+const rankOf = (n3) => (n3 >= 30 ? "名工" : n3 >= 15 ? "職人" : n3 >= 5 ? "染め手" : "見習い");
+const avg = (a) => Math.round(a.reduce((s, x) => s + x, 0) / a.length);
+
+// ---- 画面 ----
+const md = (k) => `${+k.slice(5, 7)}/${+k.slice(8, 10)}`;
+function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1600); }
+const buzz = () => { try { navigator.vibrate && navigator.vibrate(12); } catch (e) {} };
+const footer = () => `<footer><a href="#" id="f-how">遊び方</a><a id="f-fb" href="${FEEDBACK}" target="_blank" rel="noopener">感想を送る</a><a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi で応援</a></footer>`;
+function bindFooter() { const h = $("f-how"); if (h) h.onclick = (e) => { e.preventDefault(); openHow(); }; }
+function openHow() { $("fb2").href = FEEDBACK; const d = $("howto"); if (d.showModal) d.showModal(); else d.setAttribute("open", ""); }
+$("howto-ok").onclick = () => { const d = $("howto"); d.close ? d.close() : d.removeAttribute("open"); save((s) => { s.tut = true; }); };
+
+function home() {
+  const s = load(), k = todayKey(), done = s.days[k], hdone = s.hdays[k];
+  // 最後の1問を終えて結果を見る前に閉じたら、開き直したとき結果へ進める（記録をつける）。0時をまたいで翌日に開いても、終えた日の記録として残す
+  for (const m of ["d", "h"]) { const r = s.runs[m]; if (r && r.res.length >= r.list.length) { MODE = m; return finish(); } }
+  const n3 = Object.values(s.dex).filter((x) => x >= 3).length, seen = Object.keys(s.dex).length;
+  const rd = s.runs.d && s.runs.d.date === k ? s.runs.d : null, rh = s.runs.h && s.runs.h.date === k ? s.runs.h : null;
+  const heroCols = ["#33a6b8", "#cb1b45", "#e9cd4c"];
+  app.innerHTML = `
+    <div class="hero" aria-hidden="true">${heroCols.map((_, i) => `<div class="h"><div class="pole"></div><div class="cloth" style="--col:${heroCols[i]}"></div></div>`).join("")}</div>
+    <h1 class="title">重ね染め</h1>
+    <p class="lead">染め液を重ねて、見本の伝統色を染める。<br>だれでも同じ1日5色。</p>
+    ${done ? `<div class="share">今日の結果　平均 ${avg(done.p)}%\n${done.p.map((p) => "★".repeat(starsOf(p)) || "・").join("　")}</div>` : ""}
+    <button class="main" id="go-d">${done ? "今日の結果を見る" : rd ? `続きから（${rd.res.length + 1}色目）` : `今日の5色をはじめる <small>#${dayNo(k)}</small>`}</button>
+    ${done ? `<button class="main" id="go-h" style="background:var(--paper);box-shadow:0 4px 0 #9b927f">${hdone ? "上級の結果を見る" : rh ? "上級の続きから" : "上級：記憶染め（見本は最初だけ）"}</button>` : ""}
+    <div class="row"><button class="sub" id="go-p">練習（何度でも）</button><button class="sub" id="go-dex">色帳 ${seen}/${D.COLORS.length}</button></div>
+    <div class="stats"><div><b>${streak(s.days)}</b><small>連続の日</small></div><div><b>${Object.keys(s.days).length}</b><small>染めた日</small></div><div><b>${n3}</b><small>★3の色</small></div></div>
+    <p class="rank">称号：${rankOf(n3)}${n3 < 30 ? `（★3の色があと${[5, 15, 30].find((x) => x > n3) - n3}つで${rankOf([5, 15, 30].find((x) => x > n3))}）` : ""}</p>
+    ${footer()}`;
+  $("go-d").onclick = () => (done ? result("d", k) : startRun("d"));
+  if ($("go-h")) $("go-h").onclick = () => (hdone ? result("h", k) : startRun("h"));
+  $("go-p").onclick = () => startRun("p");
+  $("go-dex").onclick = dex;
+  bindFooter();
+  if (!s.tut) openHow();
+}
+
+function startRun(mode, only) {
+  const k = todayKey();
+  save((s) => {
+    if (mode !== "p" && s.runs[mode] && s.runs[mode].date === k) return; // 続きから
+    let list;
+    if (mode === "d") list = dailyList(k);
+    else if (mode === "h") list = hardList(k);
+    else if (only != null) list = [only];
+    else { const pool = D.COLORS.map((_, i) => i); for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; } list = pool.slice(0, PER); }
+    s.runs[mode] = { mode, date: k, list, res: [], id: Date.now() + "-" + performance.now().toFixed(3) };
+  });
+  MODE = mode;
+  play();
+}
+
+let cur = null; // 今の色の染め：{ n:[回数], hist:[押した桶], shown }
+function play() {
+  const s = load(), run = s.runs[MODE];
+  if (!run) return home();
+  const i = run.res.length;
+  if (i >= run.list.length) return finish();
+  const col = D.COLORS[run.list[i]];
+  // 上級で「覚えた」を押した色は、開き直しても見本を隠したまま
+  const memo = run.mode === "h" && run.memo === i;
+  cur = { n: [0, 0, 0, 0], hist: [], shown: run.mode !== "h" || memo, decided: false, i, date: run.date, id: run.id };
+  const label = run.mode === "d" ? `今日の5色` : run.mode === "h" ? "上級" : "練習";
+  app.innerHTML = `
+    <header><button class="icon" id="back" aria-label="もどる">←</button>
+      <div class="dots" aria-label="${i + 1}色目／${run.list.length}色">${run.list.map((_, j) => `<i class="${j < i ? "done" : j === i ? "on" : ""}"></i>`).join("")}</div>
+      <span style="font-size:13px;color:var(--muted)">${label} ${i + 1}/${run.list.length}</span></header>
+    <div class="pair">
+      <div class="sw"><div class="lab"><span>見本</span></div><div style="position:relative"><div class="pole"></div><div class="cloth" id="tgt" style="--col:${col.c}"></div>${run.mode !== "h" ? "" : `<div class="hidden-t" id="hid"${memo ? "" : " hidden"}>？</div>`}</div>
+        <div class="lab"><b>${col.n}</b><span>${col.y}</span></div></div>
+      <div class="sw"><div class="lab"><span>あなたの布</span></div><div><div class="pole"></div><div class="cloth" id="mine" style="--col:${D.BASE}"></div></div>
+        <div class="lab"><span id="mine-r" style="font-size:12px">まだ白い布</span></div></div>
+    </div>
+    <div class="count"><span>染めた回数</span><span class="bar"><i id="cbar" style="width:0"></i></span><span id="cnum">0 / ${D.MAX}</span></div>
+    ${run.mode === "h" && !memo ? `<button class="main" id="memo">見本を覚えた（もう見られません）</button>` : ""}
+    <div class="vats" id="vats">${D.VATS.map((v, k) => `<button class="vat" data-k="${k}" aria-label="${v.n}で染める"><span class="tub"><span class="liq" style="--dye:${dyeHex(D.VATS.map((_, j) => (j === k ? 5 : 0)))}"></span></span><span class="nm">${v.n}</span><span class="badge" id="b${k}"></span></button>`).join("")}</div>
+    <div class="row"><button class="sub" id="undo" disabled>ひとつ戻す</button><button class="sub" id="reset" disabled>はじめから</button></div>
+    <button class="main" id="decide" disabled>これで決める</button>
+    <div id="after"></div>
+    ${!s.tut || (run.mode !== "h" && Object.keys(s.dex).length === 0 && i === 0) ? `<p class="hint">桶を押すと布が染まります。重ねるほど濃くなります。</p>` : ""}`;
+  $("back").onclick = home;
+  const lock = run.mode === "h" && !memo;
+  document.querySelectorAll(".vat").forEach((b) => { b.disabled = lock; b.onclick = () => dip(+b.dataset.k, b); });
+  if (lock) $("memo").onclick = () => { cur.shown = true; save((s2) => { const r = s2.runs[MODE]; if (r && r.res.length === i) r.memo = i; }); $("hid").hidden = false; $("memo").remove(); document.querySelectorAll(".vat").forEach((b) => (b.disabled = false)); };
+  $("undo").onclick = () => { const k = cur.hist.pop(); if (k != null) { cur.n[k]--; paint(); } };
+  $("reset").onclick = () => { cur.n = [0, 0, 0, 0]; cur.hist = []; paint(); };
+  $("decide").onclick = () => decide(col);
+}
+function total() { return cur.n.reduce((s, x) => s + x, 0); }
+function dip(k, btn) {
+  if (cur.decided || total() >= D.MAX) { if (total() >= D.MAX) toast(`布が染まるのは${D.MAX}回まで`); return; }
+  cur.n[k]++; cur.hist.push(k); buzz();
+  const m = $("mine"); m.classList.remove("dip"); void m.offsetWidth; m.classList.add("dip");
+  btn.classList.remove("ripple"); void btn.offsetWidth; btn.classList.add("ripple");
+  setTimeout(paint, 230);
+  paintCount();
+}
+const recipeText = (n) => (n.some((x) => x) ? D.VATS.map((v, k) => (n[k] ? `${v.n}${n[k]}` : "")).filter(Boolean).join("・") : "まだ白い布");
+function paintCount() {
+  $("cnum").textContent = `${total()} / ${D.MAX}`; $("cbar").style.width = (total() / D.MAX * 100) + "%";
+  D.VATS.forEach((_, k) => ($("b" + k).textContent = cur.n[k] || ""));
+  $("undo").disabled = $("reset").disabled = !cur.hist.length || cur.decided;
+  $("decide").disabled = !total() || cur.decided;
+}
+function paint() { if (!$("mine")) return; // 少し遅れて呼ぶので、そのあいだに画面が替わっていたら何もしない
+  $("mine").style.setProperty("--col", dyeHex(cur.n)); $("mine-r").textContent = recipeText(cur.n); paintCount(); }
+
+function decide(col) {
+  cur.decided = true; paintCount();
+  document.querySelectorAll(".vat").forEach((b) => (b.disabled = true));
+  const p = pctOf(cur.n, col), st = starsOf(p);
+  let stale = false;
+  const s = save((s) => {
+    const r = s.runs[MODE];
+    // 別のタブで先に進んでいたら、この画面の答えは入れない（同じ色の答えが2つにならないように）
+    if (!r || r.date !== cur.date || r.id !== cur.id || r.res.length !== cur.i) { stale = true; return; }
+    r.res.push({ n: cur.n.slice(), p });
+    s.dex[col.n] = Math.max(s.dex[col.n] || 0, st);
+  });
+  if (stale) { toast("別の画面で先に進んでいます"); return play(); }
+  if ($("hid")) $("hid").hidden = true; // 上級でも決めたあとは見本を見せて比べる
+  const last = s.runs[MODE] && s.runs[MODE].res.length >= s.runs[MODE].list.length;
+  const best = col.r;
+  $("after").innerHTML = `<div class="verdict" role="status">
+    <div class="pct">${p}<small>%</small> ${starStr(st)}</div>
+    <div class="recipe">あなた ${recipeText(cur.n)}</div>
+    <div class="recipe">お手本 ${D.VATS.map((v, k) => (best[k] ? `<span style="--dye:${dyeHex(D.VATS.map((_, j) => (j === k ? 5 : 0)))}"><i></i>${v.n} ${best[k]}</span>` : "")).join("")}</div>
+    <p class="note">${p >= 95 ? "ほぼ見本どおり。" : p >= 85 ? "近い色。もう一息。" : p >= 70 ? "同じ仲間の色。" : "お手本の重ね方を見てみよう。"}</p>
+    <button class="main" id="next">${last ? "結果を見る" : "次の色へ"}</button></div>`;
+  $("next").onclick = play;
+  $("next").scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function finish() {
+  const s = load(), run = s.runs[MODE];
+  if (!run) return home();
+  const ps = run.res.map((r) => r.p);
+  let first = false;
+  save((s2) => {
+    if (run.mode === "d" && !s2.days[run.date]) { s2.days[run.date] = { p: ps, n: run.res.map((r) => r.n) }; first = true; }
+    if (run.mode === "h" && !s2.hdays[run.date]) { s2.hdays[run.date] = { p: ps, n: run.res.map((r) => r.n) }; first = true; }
+    s2.runs[MODE] = null;
+  });
+  if (run.mode === "p") return result("p", run.date, run);
+  result(run.mode, run.date, null, first);
+}
+
+function shareText(mode, k, list, ps) {
+  return `重ね染め${mode === "h" ? " 上級" : ""} #${dayNo(k)} ${md(k)}\n${list.map((i) => EMO[D.COLORS[i].f]).join("")}\n${ps.map((p) => "★".repeat(starsOf(p)) || "・").join(" ")}\n平均 ${avg(ps)}%`;
+}
+function untilNext() { const n = jstNow(), ms = 864e5 - (n.getTime() % 864e5); const h = Math.floor(ms / 36e5), m = Math.floor((ms % 36e5) / 6e4); return `${h}時間${m}分`; }
+
+function result(mode, k, prun, first) {
+  const s = load();
+  let list, rec;
+  if (mode === "p") { list = prun.list; rec = { p: prun.res.map((r) => r.p), n: prun.res.map((r) => r.n) }; }
+  else { list = mode === "d" ? dailyList(k) : hardList(k); rec = (mode === "d" ? s.days : s.hdays)[k]; }
+  if (!rec) return home();
+  const a = avg(rec.p), text = shareText(mode, k, list, rec.p);
+  const showKofi = first && mode !== "p" && a >= 80 && !s.kofi[k + mode];
+  if (showKofi) save((s2) => { s2.kofi[k + mode] = 1; });
+  app.innerHTML = `
+    <header><button class="icon" id="back" aria-label="ホームへ">←</button><h1>重ね染め<small>${mode === "d" ? `今日の5色 #${dayNo(k)}` : mode === "h" ? "上級：記憶染め" : "練習"}</small></h1><span></span></header>
+    <div><div class="pole"></div><div class="line" style="margin-top:-2px">${list.map((ci, j) => { const c = D.COLORS[ci]; return `<div class="it"><div class="cloth" style="--col:${c.c};--mine:${dyeHex(rec.n[j])}" aria-label="${c.n}：上が見本、下があなたの布"></div><b>${c.n}</b>${starStr(starsOf(rec.p[j]))}<span>${rec.p[j]}%</span></div>`; }).join("")}</div></div>
+    <p class="note">布の上半分が見本、下半分があなたの色</p>
+    <p class="big">平均 ${a}%</p>
+    ${mode !== "p" ? `<div class="share">${text.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</div>
+    <button class="main" id="share">結果をシェア</button>
+    <div class="shares"><a id="toX" target="_blank" rel="noopener">Xで投稿</a><a id="toLine" target="_blank" rel="noopener">LINEで送る</a><button id="copy">コピー</button></div>
+    <p class="note">次の5色まで あと <b>${untilNext()}</b></p>` : ""}
+    ${mode === "d" && k === todayKey() && !s.hdays[k] ? `<button class="main" id="go-h" style="background:var(--paper);box-shadow:0 4px 0 #9b927f">上級：記憶染めに挑む</button>` : ""}
+    <div class="row"><button class="sub" id="go-p">${mode === "p" ? "もう一度練習" : "練習する"}</button><button class="sub" id="go-dex">色帳を見る</button></div>
+    ${showKofi ? `<p class="note kofi">楽しめたら、<a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi でコーヒー1杯の応援</a>をもらえると、新しい色とゲームづくりの励みになります（任意・遊ぶのはずっと無料）。</p>` : ""}
+    <p class="note"><a href="${FEEDBACK}" target="_blank" rel="noopener" id="fb">感想を送る</a></p>`;
+  $("back").onclick = home;
+  $("go-p").onclick = () => startRun("p");
+  $("go-dex").onclick = dex;
+  if ($("go-h")) $("go-h").onclick = () => (k === todayKey() ? startRun("h") : home()); // 画面を開いたまま0時を過ぎたら、翌日の上級は始めない
+  if (mode !== "p") {
+    const withUrl = text + "\n" + SITE;
+    $("toX").href = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(withUrl);
+    $("toLine").href = "https://line.me/R/share?text=" + encodeURIComponent(withUrl);
+    const copy = (t) => { (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("コピーしました"), () => toast("コピーできませんでした")); };
+    $("copy").onclick = () => copy(withUrl);
+    $("share").onclick = () => { if (navigator.share) navigator.share({ text: withUrl }).catch(() => {}); else copy(withUrl); };
+  }
+}
+
+function dex(sel) {
+  const s = load();
+  const n3 = Object.values(s.dex).filter((x) => x >= 3).length;
+  const c = typeof sel === "number" ? D.COLORS[sel] : null;
+  app.innerHTML = `
+    <header><button class="icon" id="back" aria-label="ホームへ">←</button><h1>色帳<small>${Object.keys(s.dex).length}/${D.COLORS.length}色・★3 ${n3}</small></h1><span></span></header>
+    ${c ? `<div class="sheet"><div style="display:flex;gap:12px;align-items:center"><div class="cloth" style="--col:${c.c};width:64px;height:64px"></div><div><h3>${c.n}</h3><div>${c.y}　${starStr(s.dex[c.n] || 0)}</div></div></div>
+      <div class="recipe" style="justify-content:flex-start">${(s.dex[c.n] || 0) >= 1 ? `お手本 ${recipeText(c.r)}` : "★1をとるとお手本が見られます"}</div>
+      <button class="sub" id="prac">この色を練習する</button></div>` : `<p class="note">染めた色が集まります。色を押すと、その色だけ練習できます。</p>`}
+    <div class="dex">${D.COLORS.map((x, i) => (x.n in s.dex ? `<button data-i="${i}" aria-label="${x.n}"><div class="cloth" style="--col:${x.c}"></div><span>${x.n}</span>${starStr(s.dex[x.n])}</button>` : `<button data-i="${i}" aria-label="まだ染めていない色"><div class="unk">？</div><span>　</span></button>`)).join("")}</div>
+    ${footer()}`;
+  $("back").onclick = home;
+  document.querySelectorAll(".dex button").forEach((b) => (b.onclick = () => { const i = +b.dataset.i; if (D.COLORS[i].n in s.dex) { dex(i); window.scrollTo(0, 0); } else toast("練習や今日の5色で出会うと載ります"); }));
+  if (c) $("prac").onclick = () => startRun("p", sel);
+  bindFooter();
+}
+
+window.__kz = { mode: () => MODE, D, pick, dailyList, hardList, dyeHex, deOf, pctOf, starsOf, seedOf, todayKey, dayNo, shareText, streak, load };
+home();
+if ("serviceWorker" in navigator && location.protocol === "https:" && /github\.io$/.test(location.hostname)) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>
