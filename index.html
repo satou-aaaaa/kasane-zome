@@ -39,6 +39,7 @@ header{display:flex;justify-content:space-between;align-items:center;gap:8px;min
 h1{font-family:var(--f-disp);font-weight:800;font-size:22px;margin:0;letter-spacing:.12em;color:var(--paper)}
 h1 small{font-family:var(--f-body);font-size:12px;letter-spacing:0;color:var(--muted);margin-left:8px;font-weight:500}
 .icon{all:unset;cursor:pointer;font-size:18px;min-width:44px;height:44px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--line);box-sizing:border-box;padding:0 8px}
+.icon:disabled{opacity:.3;cursor:default}
 .icon:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .dots{display:flex;gap:6px;flex:1;max-width:160px}
 .dots i{flex:1;height:6px;border-radius:3px;background:var(--line)}
@@ -46,7 +47,7 @@ h1 small{font-family:var(--f-body);font-size:12px;letter-spacing:0;color:var(--m
 button.main,a.main{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;border-radius:12px;background:var(--gold);color:#241a08;font-weight:700;font-size:17px;padding:0 16px;text-align:center;box-shadow:0 4px 0 #8a6a2c}
 button.main:active{transform:translateY(2px);box-shadow:0 2px 0 #8a6a2c}
 button.main:disabled{opacity:.45;cursor:default}
-button.sub,a.sub{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--paper);font-weight:700;font-size:15px;padding:0 12px;text-align:center}
+button.sub,a.sub{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--paper);font-weight:700;font-size:15px;padding:0 8px;text-align:center}
 button.sub:disabled{opacity:.4;cursor:default}
 .row{display:flex;gap:10px}.row>.sub,.row>.main{flex:1 1 0}
 .note{color:var(--muted);font-size:13px;line-height:1.6;margin:0;text-align:center}
@@ -101,7 +102,7 @@ button.sub:disabled{opacity:.4;cursor:default}
 @keyframes sway{0%,100%{transform:rotate(-1.2deg)}50%{transform:rotate(1.2deg)}}
 .title{font-family:var(--f-disp);font-weight:800;font-size:44px;letter-spacing:.2em;text-align:center;margin:8px 0 0}
 .lead{text-align:center;color:var(--muted);margin:0;font-size:14px;line-height:1.7}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px}
 .stats div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center}
 .stats b{display:block;font-size:20px;font-family:var(--f-disp)}
 .stats small{color:var(--muted);font-size:12px}
@@ -133,6 +134,41 @@ dialog ol{padding-left:1.3em;margin:0 0 12px;line-height:1.8}
 dialog p{margin:0 0 10px;font-size:14px;line-height:1.7;color:#4d463d}
 dialog a{color:#7a5a1c;min-height:44px;display:inline-flex;align-items:center}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--paper);color:var(--ink);padding:10px 16px;border-radius:10px;font-weight:700;z-index:9;box-shadow:0 6px 20px #0008}
+/* 見立て・一致の目盛り・ぴたり */
+.meter{position:relative;height:10px;border-radius:5px;background:#0000001a;margin:2px 4px 6px}
+.meter>i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:linear-gradient(90deg,#c9932e,#e2b65a);width:var(--w);animation:fill .7s ease-out}
+.meter>u{position:absolute;top:-3px;bottom:-3px;width:2px;background:#00000033;text-decoration:none}
+@keyframes fill{from{width:0}}
+.verdict .pct{animation:pop .45s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:none;opacity:1}}
+.pitari{align-self:center;font-family:var(--f-disp);font-weight:800;font-size:18px;letter-spacing:.3em;color:#8a5a12;border:2px solid #c9932e;border-radius:999px;padding:2px 14px 2px 18px;animation:pop .5s .15s both cubic-bezier(.3,1.6,.5,1)}
+.cloth.glow{animation:glow 1.2s ease-out}
+@keyframes glow{0%{filter:brightness(1)}30%{filter:brightness(1.35) saturate(1.2)}100%{filter:none}}
+.mitate{background:var(--panel);border:1px dashed var(--gold);border-radius:12px;padding:10px 12px;font-size:15px;text-align:center;animation:up .3s ease-out}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.row3>.sub{font-size:14px;padding:0 4px}
+/* 実績・カレンダー */
+.achs{display:flex;flex-direction:column;gap:8px}
+.ach{display:grid;grid-template-columns:32px 1fr auto;gap:2px 10px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.ach .ic{grid-row:span 2;font-size:22px;text-align:center}
+.ach b{font-family:var(--f-disp);font-size:16px;letter-spacing:.06em}
+.ach small{grid-column:2/4;color:var(--muted);font-size:12px;line-height:1.5}
+.ach .pg{font-size:12px;color:var(--gold);white-space:nowrap}
+.ach.no{opacity:.72}.ach.no .ic{filter:grayscale(1);opacity:.5}
+.ach.got{border-color:#d8b26a66}
+button.sub.newach{border-color:var(--gold);font-size:14px;animation:up .4s ease-out}
+.calh{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.calh b{font-family:var(--f-disp);font-size:20px;letter-spacing:.08em}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal .wd{font-size:11px;color:var(--muted);text-align:center}
+.cal .c{all:unset;box-sizing:border-box;min-height:44px;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;color:var(--muted);position:relative;line-height:1.1}
+.cal .c.d1{background:#d8b26a40;color:var(--paper)}.cal .c.d2{background:#d8b26a90;color:var(--ink)}.cal .c.d3{background:var(--gold);color:var(--ink)}
+.cal .c.late{border:1px dashed var(--gold);color:var(--paper);background:#d8b26a1a}
+.cal .c.miss{cursor:pointer;border:1px dashed var(--muted);color:var(--paper)}
+.cal .c.today{outline:2px solid var(--paper);outline-offset:-2px}
+.cal .c small{font-size:10px}
+.cal .c.h::after{content:"";position:absolute;top:4px;right:5px;width:5px;height:5px;border-radius:50%;background:var(--paper);box-shadow:0 0 0 1px #0006}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:4px}
 .hint{background:var(--panel);border:1px solid var(--gold);border-radius:12px;padding:10px 12px;font-size:14px;text-align:center}
 footer{margin-top:auto;text-align:center;font-size:12px;color:var(--muted);display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
 footer a{color:var(--muted);min-height:44px;display:inline-flex;align-items:center}
@@ -149,6 +185,7 @@ footer a{color:var(--muted);min-height:44px;display:inline-flex;align-items:cent
     <li>見本と同じ色になったら「これで決める」。</li>
   </ol>
   <p>藍に刈安（黄）を重ねると緑になります。昔の緑もこうして染めました。時間制限はありません。</p>
+  <p>迷ったら「見立て」。1色に1回、見本とのちがいを一言で教えてくれます。</p>
   <p>今日の5色はだれでも同じで、1日1回。練習は何度でも遊べます。</p>
   <p><a id="fb2" target="_blank" rel="noopener">感想を送る</a></p>
   <button class="main" id="howto-ok" style="width:100%">わかった</button>
@@ -195,6 +232,13 @@ const dyeHex = (n) => rgb2hex(BASE_LIN.map((v, i) => gam(v * D.VATS.reduce((m, V
 const deOf = (n, col) => de2000(lab(hex2rgb(dyeHex(n))), lab(hex2rgb(col.c)));
 // 一致度：お手本と同じ近さなら100%。お手本より色の差が1増えるごとに3%下がる
 const pctOf = (n, col) => Math.max(0, Math.min(100, Math.round(100 - Math.max(0, deOf(n, col) - col.d) * 3)));
+// 見立て：今の布と見本のいちばん大きなちがいを一言で（どの液を何回とは言わない）
+function adviceOf(n, col) {
+  if (pctOf(n, col) >= 95) return "もう見本どおり";
+  const a = lab(hex2rgb(dyeHex(n))), t = lab(hex2rgb(col.c)), dL = t[0] - a[0], da = t[1] - a[1], db = t[2] - a[2];
+  const c = [[Math.abs(dL), dL < 0 ? "もっと濃く" : "濃すぎる"], [Math.abs(da), da > 0 ? "赤みが足りない" : "緑みが足りない"], [Math.abs(db), db > 0 ? "黄みが足りない" : "青みが足りない"]];
+  return c.reduce((m, x) => (x[0] > m[0] ? x : m))[1];
+}
 const starsOf = (p) => (p >= 95 ? 3 : p >= 85 ? 2 : p >= 70 ? 1 : 0);
 const starStr = (s) => `<span class="stars" aria-label="星${s}つ">${"★".repeat(s)}<span class="off">${"★".repeat(3 - s)}</span></span>`;
 const EMO = { red: "🟥", orange: "🟧", yellow: "🟨", green: "🟩", blue: "🟦", purple: "🟪", brown: "🟫", gray: "⬜" };
@@ -227,13 +271,15 @@ const hardList = (k) => pick(seedOf(k + "h"), true, dailyList(k));
 
 // ---- 記録（この端末の localStorage だけ）----
 // 進行中の遊びはモードごとに分けて持つ（練習を始めても今日の5色・上級の途中経過を消さない）
-const fresh = () => ({ v: 1, days: {}, hdays: {}, dex: {}, runs: {}, tut: false, kofi: {} });
+// late：取りこぼした日をあとから遊んだ記録（days とは別。連続日数・今日の記録には数えない）・ach：結果の画面で知らせ終えた実績
+const fresh = () => ({ v: 1, days: {}, hdays: {}, late: {}, dex: {}, runs: {}, tut: false, kofi: {}, ach: {} });
+const BOOK = { d: "days", h: "hdays", a: "late" }; // モードごとの日ごとの記録の置き場（練習 p は無し）
 let MODE = "d";
 let mem = null; // 保存できない環境（保存を切ったブラウザなど）では、開いているあいだだけここに置く
-const doneOf = (r) => !!r && r.res.length >= r.list.length, recOf = (r) => ({ p: r.res.map((x) => x.p), n: r.res.map((x) => x.n) });
+const doneOf = (r) => !!r && r.res.length >= r.list.length, recOf = (r) => ({ p: r.res.map((x) => x.p), n: r.res.map((x) => x.n), h: r.res.map((x) => (x.h ? 1 : 0)) }); // h：見立てを使った色
 // 終わった今日・上級の回を日ごとの記録に入れる（結果を見る前に別のタブが次の日を保存しても、終えた日を失わない）
-function bank(s, r) { const b = doneOf(r) ? (r.mode === "d" ? s.days : r.mode === "h" ? s.hdays : null) : null; if (!b || b[r.date]) return false; b[r.date] = recOf(r); return true; }
-function load() { let a = null, b = null; try { b = JSON.parse(localStorage.getItem(KEY)); } catch (e) {} try { a = mem !== null ? JSON.parse(mem) : null; } catch (e) {} if (a && a.v !== 1) a = null; if (b && b.v !== 1) b = null; if (!a || !b) return Object.assign(fresh(), a || b || {}); const [n, o] = (a.t || 0) >= (b.t || 0) ? [a, b] : [b, a]; const s = Object.assign(fresh(), n); for (const k in o) { if (k === "runs" || k === "t") continue; const x = o[k], y = n[k]; if (x && y && typeof x === "object" && typeof y === "object") { s[k] = Object.assign({}, x, y); for (const q in x) if (typeof x[q] === "number" && typeof y[q] === "number") s[k][q] = Math.max(x[q], y[q]); } else if (typeof x === "number" && typeof y === "number") s[k] = Math.max(x, y); else if (x === true) s[k] = true; } const ra = a.runs || {}, rb = b.runs || {}, prog = (r) => (r.res ? r.res.length : r.i || 0) * 2 + (r.cur || r.path ? 1 : 0), idOf = (r) => JSON.stringify([r.list || r.tags || null, r.id || null]); s.runs = Object.assign({}, n.runs); for (const m of new Set([...Object.keys(ra), ...Object.keys(rb)])) { const x = ra[m], y = rb[m]; if (x === undefined || y === undefined) { if (x || y) s.runs[m] = x || y; continue; } if (!x || !y) { const r = x || y; if (!r || bank(s, r) || doneOf(r)) continue; const bd = r.mode === "d" ? s.days : r.mode === "h" ? s.hdays : null; if (bd && !bd[r.date]) s.runs[m] = r; continue; } if (x.date !== y.date) { const [w, l] = x.date > y.date ? [x, y] : [y, x]; bank(s, l); s.runs[m] = w; } else if (idOf(x) === idOf(y)) { const px = prog(x), py = prog(y); s.runs[m] = px > py ? x : py > px ? y : n.runs[m]; } } return s; } // 保存に失敗したあとはメモリと保存の両方を読み、記録（日ごとの結果・帳など）は合わせ、途中経過は新しい方（t が大きい方）を使う
+function bank(s, r) { const b = doneOf(r) && BOOK[r.mode] ? s[BOOK[r.mode]] : null; if (!b || b[r.date]) return false; b[r.date] = recOf(r); return true; }
+function load() { let a = null, b = null; try { b = JSON.parse(localStorage.getItem(KEY)); } catch (e) {} try { a = mem !== null ? JSON.parse(mem) : null; } catch (e) {} if (a && a.v !== 1) a = null; if (b && b.v !== 1) b = null; if (!a || !b) return Object.assign(fresh(), a || b || {}); const [n, o] = (a.t || 0) >= (b.t || 0) ? [a, b] : [b, a]; const s = Object.assign(fresh(), n); for (const k in o) { if (k === "runs" || k === "t") continue; const x = o[k], y = n[k]; if (x && y && typeof x === "object" && typeof y === "object") { s[k] = Object.assign({}, x, y); for (const q in x) if (typeof x[q] === "number" && typeof y[q] === "number") s[k][q] = Math.max(x[q], y[q]); } else if (typeof x === "number" && typeof y === "number") s[k] = Math.max(x, y); else if (x === true) s[k] = true; } const ra = a.runs || {}, rb = b.runs || {}, prog = (r) => (r.res ? r.res.length : r.i || 0) * 2 + (r.cur || r.path ? 1 : 0), idOf = (r) => JSON.stringify([r.list || r.tags || null, r.id || null]); s.runs = Object.assign({}, n.runs); for (const m of new Set([...Object.keys(ra), ...Object.keys(rb)])) { const x = ra[m], y = rb[m]; if (x === undefined || y === undefined) { if (x || y) s.runs[m] = x || y; continue; } if (!x || !y) { const r = x || y; if (!r || bank(s, r) || doneOf(r)) continue; const bd = BOOK[r.mode] ? s[BOOK[r.mode]] : null; if (bd && !bd[r.date]) s.runs[m] = r; continue; } if (x.date !== y.date) { const [w, l] = x.date > y.date ? [x, y] : [y, x]; bank(s, l); s.runs[m] = w; } else if (idOf(x) === idOf(y)) { const px = prog(x), py = prog(y); s.runs[m] = px > py ? x : py > px ? y : n.runs[m]; } } return s; } // 保存に失敗したあとはメモリと保存の両方を読み、記録（日ごとの結果・帳など）は合わせ、途中経過は新しい方（t が大きい方）を使う
 // 保存の前に読み直す（別のタブで進めた記録を消さない）
 function save(fn) { const s = load(); fn(s); s.t = Math.max(Date.now(), (s.t || 0) + 1); const j = JSON.stringify(s); try { localStorage.setItem(KEY, j); mem = null; } catch (e) { mem = j; } return s; }
 function streak(days) {
@@ -242,6 +288,43 @@ function streak(days) {
   while (days[k]) { n++; k = new Date(Date.parse(k) - 864e5).toISOString().slice(0, 10); }
   return n;
 }
+const addDay = (k, n) => new Date(Date.parse(k) + n * 864e5).toISOString().slice(0, 10);
+// 取りこぼした日：きのうから7日前までで、今日の5色を遊んでいない日（新しい順。始まりの日より前は無い）
+function missedDays(s, k = todayKey()) { const out = []; for (let i = 1; i <= 7; i++) { const d = addDay(k, -i); if (d >= EPOCH && !s.days[d] && !s.late[d]) out.push(d); } return out; }
+
+// ---- 実績（いまの記録から毎回数える。腕前・集める・続けるを混ぜる）----
+const recsOf = (b) => Object.values(b || {}).filter((r) => r && Array.isArray(r.p) && r.p.length);
+function tally(s) {
+  const dr = recsOf(s.days), hr = recsOf(s.hdays), all = [...dr, ...hr, ...recsOf(s.late)];
+  const fams = new Set(D.COLORS.map((c) => c.f)), f3 = new Set(D.COLORS.filter((c) => (s.dex[c.n] || 0) >= 3).map((c) => c.f));
+  return {
+    days: Object.keys(s.days).length, hdays: Object.keys(s.hdays).length,
+    pitari: all.reduce((t, r) => t + r.p.filter((p) => p >= 100).length, 0),
+    best3: Math.max(0, ...dr.map((r) => r.p.filter((p) => p >= 95).length)),
+    clean: dr.some((r) => !(r.h || []).some(Boolean) && avg(r.p) >= 90) ? 1 : 0,
+    hbest: Math.max(0, ...hr.map((r) => avg(r.p))),
+    seen: Object.keys(s.dex).filter((n) => D.COLORS.some((c) => c.n === n)).length, fam: f3.size, fams: fams.size,
+  };
+}
+const N = () => D.COLORS.length;
+// [id, 名前, 条件, 今の数, 目標, 単位]
+const ACH = [
+  ["first", "はじめの一反", "今日の5色を染める", (t) => t.days, () => 1],
+  ["pitari", "ぴたり", "1色をお手本どおり（100%）に染める", (t) => t.pitari, () => 1],
+  ["full3", "五色そろい", "今日の5色を全部★3で", (t) => t.best3, () => 5],
+  ["clean", "見立てなし", "見立てを使わず、今日の5色を平均90%以上", (t) => t.clean, () => 1],
+  ["hard", "記憶染め", "上級を平均85%以上で終える", (t) => t.hbest, () => 85, "%"],
+  ["pitari10", "ぴたり十色", "100%で染めた色が合わせて10", (t) => t.pitari, () => 10],
+  ["dex4", "色帳 四分", "色帳の4分の1の色に出会う", (t) => t.seen, () => Math.ceil(N() / 4)],
+  ["dex2", "色帳 半分", "色帳の半分の色に出会う", (t) => t.seen, () => Math.ceil(N() / 2)],
+  ["dexall", "色帳 皆", "色帳のすべての色に出会う", (t) => t.seen, () => N()],
+  ["fam", "八色の仲間", "赤・青・緑など、すべての色の仲間で★3", (t) => t.fam, (t) => t.fams],
+  ["days7", "七日染め", "今日の5色を合わせて7日", (t) => t.days, () => 7],
+  ["hard5", "記憶の蔵", "上級を合わせて5日", (t) => t.hdays, () => 5],
+  ["days30", "ひと月染め", "今日の5色を合わせて30日", (t) => t.days, () => 30],
+];
+function achList(s) { const t = tally(s); return ACH.map(([id, name, cond, cur, goal, unit]) => { const g = goal(t), c = cur(t); return { id, name, cond, cur: Math.min(c, g), goal: g, unit: unit || "", got: c >= g }; }); }
+const achGot = (s) => achList(s).filter((a) => a.got).map((a) => a.id);
 const rankOf = (n3) => (n3 >= 30 ? "名工" : n3 >= 15 ? "職人" : n3 >= 5 ? "染め手" : "見習い");
 const avg = (a) => Math.round(a.reduce((s, x) => s + x, 0) / a.length);
 
@@ -257,10 +340,10 @@ $("howto-ok").onclick = () => { const d = $("howto"); d.close ? d.close() : d.re
 function home() {
   const s = load(), k = todayKey(), done = s.days[k], hdone = s.hdays[k];
   // 最後の1問を終えて結果を見る前に閉じたら、開き直したとき結果へ進める（記録をつける）。0時をまたいで翌日に開いても、終えた日の記録として残す
-  for (const m of ["d", "h"]) { const r = s.runs[m]; if (r && r.res.length >= r.list.length) { MODE = m; return finish(); } }
+  for (const m of ["d", "h", "a"]) { const r = s.runs[m]; if (r && r.res.length >= r.list.length) { MODE = m; return finish(); } }
   const n3 = Object.values(s.dex).filter((x) => x >= 3).length, seen = Object.keys(s.dex).length;
   const rd = s.runs.d && s.runs.d.date === k ? s.runs.d : null, rh = s.runs.h && s.runs.h.date === k ? s.runs.h : null;
-  const heroCols = ["#33a6b8", "#cb1b45", "#e9cd4c"];
+  const heroCols = ["#33a6b8", "#cb1b45", "#e9cd4c"], st = streak(s.days), miss = missedDays(s, k);
   app.innerHTML = `
     <div class="hero" aria-hidden="true">${heroCols.map((_, i) => `<div class="h"><div class="pole"></div><div class="cloth" style="--col:${heroCols[i]}"></div></div>`).join("")}</div>
     <h1 class="title">重ね染め</h1>
@@ -269,29 +352,35 @@ function home() {
     <button class="main" id="go-d">${done ? "今日の結果を見る" : rd ? `続きから（${rd.res.length + 1}色目）` : `今日の5色をはじめる <small>#${dayNo(k)}</small>`}</button>
     ${done ? `<button class="main" id="go-h" style="background:var(--paper);box-shadow:0 4px 0 #9b927f">${hdone ? "上級の結果を見る" : rh ? "上級の続きから" : "上級：記憶染め（見本は最初だけ）"}</button>` : ""}
     <div class="row"><button class="sub" id="go-p">練習（何度でも）</button><button class="sub" id="go-dex">色帳 ${seen}/${D.COLORS.length}</button></div>
-    <div class="stats"><div><b>${streak(s.days)}</b><small>連続の日</small></div><div><b>${Object.keys(s.days).length}</b><small>染めた日</small></div><div><b>${n3}</b><small>★3の色</small></div></div>
+    <div class="row"><button class="sub" id="go-cal">染めた日${miss.length ? `<small style="color:var(--gold)">↺${miss.length}</small>` : ""}</button><button class="sub" id="go-ach">実績 ${achGot(s).length}/${ACH.length}</button></div>
+    <div class="stats">${st ? `<div><b>${st}</b><small>連続の日</small></div>` : ""}<div><b>${Object.keys(s.days).length}</b><small>染めた日</small></div><div><b>${n3}</b><small>★3の色</small></div></div>
     <p class="rank">称号：${rankOf(n3)}${n3 < 30 ? `（★3の色があと${[5, 15, 30].find((x) => x > n3) - n3}つで${rankOf([5, 15, 30].find((x) => x > n3))}）` : ""}</p>
     ${footer()}`;
   $("go-d").onclick = () => (k !== todayKey() ? home() : done ? result("d", k) : startRun("d")); // 画面を開いたまま0時を過ぎたら、今日の状態に描き直す
   if ($("go-h")) $("go-h").onclick = () => (hdone ? result("h", k) : k === todayKey() ? startRun("h") : home()); // 画面を開いたまま0時を過ぎたら、翌日の上級は始めない
   $("go-p").onclick = () => startRun("p");
   $("go-dex").onclick = dex;
+  $("go-cal").onclick = () => cal();
+  $("go-ach").onclick = achv;
   bindFooter();
   if (!s.tut) openHow();
 }
 
 function startRun(mode, only) {
-  const k = todayKey();
+  const k = mode === "a" ? only : todayKey(); // あとから（a）は only に遊ぶ日を渡す
+  let gone = false;
   save((s) => {
     if (mode !== "p" && s.runs[mode] && s.runs[mode].date === k) return; // 続きから
+    if (mode === "a" && !missedDays(s).includes(k)) { gone = true; return; } // 7日より前・もう遊んだ日（別のタブ）は始めない
     if ((mode === "d" && s.days[k]) || (mode === "h" && s.hdays[k])) return; // 別のタブで今日の分を終えていたら、もう一度は始めない（ホームに戻る）
     let list;
-    if (mode === "d") list = dailyList(k);
+    if (mode === "d" || mode === "a") list = dailyList(k); // あとからも、その日の今日の5色と同じ（日付の種）
     else if (mode === "h") list = hardList(k);
     else if (only != null) list = [only];
     else { const pool = D.COLORS.map((_, i) => i); for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; } list = pool.slice(0, PER); }
     s.runs[mode] = { mode, date: k, list, res: [], id: Date.now() + "-" + performance.now().toFixed(3) };
   });
+  if (gone) { toast("この日はもう遊べません"); return cal(); }
   MODE = mode;
   play();
 }
@@ -305,8 +394,9 @@ function play() {
   const col = D.COLORS[run.list[i]];
   // 上級で「覚えた」を押した色は、開き直しても見本を隠したまま
   const memo = run.mode === "h" && run.memo === i;
-  cur = { n: [0, 0, 0, 0], hist: [], shown: run.mode !== "h" || memo, decided: false, i, date: run.date, id: run.id };
-  const label = run.mode === "d" ? `今日の5色` : run.mode === "h" ? "上級" : "練習";
+  const used = run.hint === i; // 見立ては1色に1回（開き直しても使ったまま）
+  cur = { n: [0, 0, 0, 0], hist: [], shown: run.mode !== "h" || memo, decided: false, i, date: run.date, id: run.id, h: used };
+  const label = run.mode === "d" ? `今日の5色` : run.mode === "h" ? "上級" : run.mode === "a" ? `${md(run.date)}の5色` : "練習";
   app.innerHTML = `
     <header><button class="icon" id="back" aria-label="もどる">←</button>
       <div class="dots" aria-label="${i + 1}色目／${run.list.length}色">${run.list.map((_, j) => `<i class="${j < i ? "done" : j === i ? "on" : ""}"></i>`).join("")}</div>
@@ -320,7 +410,8 @@ function play() {
     <div class="count"><span>染めた回数</span><span class="bar"><i id="cbar" style="width:0"></i></span><span id="cnum">0 / ${D.MAX}</span></div>
     ${run.mode === "h" && !memo ? `<button class="main" id="memo">見本を覚えた（もう見られません）</button>` : ""}
     <div class="vats" id="vats">${D.VATS.map((v, k) => `<button class="vat" data-k="${k}" aria-label="${v.n}で染める"><span class="tub"><span class="liq" style="--dye:${dyeHex(D.VATS.map((_, j) => (j === k ? 5 : 0)))}"></span></span><span class="nm">${v.n}</span><span class="badge" id="b${k}"></span></button>`).join("")}</div>
-    <div class="row"><button class="sub" id="undo" disabled>ひとつ戻す</button><button class="sub" id="reset" disabled>はじめから</button></div>
+    <div class="${run.mode === "h" ? "row" : "row3"}"><button class="sub" id="undo" disabled>ひとつ戻す</button><button class="sub" id="reset" disabled>はじめから</button>${run.mode === "h" ? "" : `<button class="sub" id="mitate" disabled>${used ? "見立て済" : "見立て"}</button>`}</div>
+    <div id="mitate-t" aria-live="polite"></div>
     <button class="main" id="decide" disabled>これで決める</button>
     <div id="after"></div>
     ${!s.tut || (run.mode !== "h" && Object.keys(s.dex).length === 0 && i === 0) ? `<p class="hint">桶を押すと布が染まります。重ねるほど濃くなります。</p>` : ""}`;
@@ -331,6 +422,15 @@ function play() {
   $("undo").onclick = () => { const k = cur.hist.pop(); if (k != null) { cur.n[k]--; paint(); } };
   $("reset").onclick = () => { cur.n = [0, 0, 0, 0]; cur.hist = []; paint(); };
   $("decide").onclick = () => decide(col);
+  if ($("mitate")) $("mitate").onclick = () => { // 見立て：1色に1回、今の布と見本のちがいを一言で
+    if (cur.h || cur.decided || !total()) return;
+    let ok = true;
+    save((s2) => { const r = s2.runs[MODE]; if (!r || r.id !== cur.id || r.res.length !== i) { ok = false; return; } r.hint = i; });
+    if (!ok) { toast("別の画面で先に進んでいます"); return play(); }
+    cur.h = true; buzz();
+    $("mitate-t").innerHTML = `<p class="mitate">見立て：<b>${adviceOf(cur.n, col)}</b></p>`;
+    paintCount();
+  };
 }
 function total() { return cur.n.reduce((s, x) => s + x, 0); }
 function dip(k, btn) {
@@ -347,6 +447,7 @@ function paintCount() {
   D.VATS.forEach((_, k) => ($("b" + k).textContent = cur.n[k] || ""));
   $("undo").disabled = $("reset").disabled = !cur.hist.length || cur.decided;
   $("decide").disabled = !total() || cur.decided;
+  if ($("mitate")) { $("mitate").disabled = cur.h || cur.decided || !total(); $("mitate").textContent = cur.h ? "見立て済" : "見立て"; }
 }
 function paint() { if (!$("mine")) return; // 少し遅れて呼ぶので、そのあいだに画面が替わっていたら何もしない
   $("mine").style.setProperty("--col", dyeHex(cur.n)); $("mine-r").textContent = recipeText(cur.n); paintCount(); }
@@ -360,7 +461,7 @@ function decide(col) {
     const r = s.runs[MODE];
     // 別のタブで先に進んでいたら、この画面の答えは入れない（同じ色の答えが2つにならないように）
     if (!r || r.date !== cur.date || r.id !== cur.id || r.res.length !== cur.i) { stale = true; return; }
-    r.res.push({ n: cur.n.slice(), p });
+    r.res.push(cur.h ? { n: cur.n.slice(), p, h: 1 } : { n: cur.n.slice(), p });
     s.dex[col.n] = Math.max(s.dex[col.n] || 0, st);
   });
   if (stale) { toast("別の画面で先に進んでいます"); return play(); }
@@ -369,11 +470,14 @@ function decide(col) {
   const best = col.r;
   $("after").innerHTML = `<div class="verdict" role="status">
     <div class="pct">${p}<small>%</small> ${starStr(st)}</div>
+    <div class="meter" aria-hidden="true"><i style="--w:${p}%"></i><u style="left:70%"></u><u style="left:85%"></u><u style="left:95%"></u></div>
+    ${p >= 100 ? `<div class="pitari">ぴたり</div>` : ""}
     <div class="recipe">あなた ${recipeText(cur.n)}</div>
     <div class="recipe">お手本 ${D.VATS.map((v, k) => (best[k] ? `<span style="--dye:${dyeHex(D.VATS.map((_, j) => (j === k ? 5 : 0)))}"><i></i>${v.n} ${best[k]}</span>` : "")).join("")}</div>
-    <p class="note">${p >= 95 ? "ほぼ見本どおり。" : p >= 85 ? "近い色。もう一息。" : p >= 70 ? "同じ仲間の色。" : "お手本の重ね方を見てみよう。"}</p>
+    <p class="note">${p >= 95 ? "ほぼ見本どおり。" : `${p >= 85 ? "近い色。もう一息。" : p >= 70 ? "同じ仲間の色。" : "お手本の重ね方を見てみよう。"}<br>見立て：${adviceOf(cur.n, col)}${[70, 85, 95][st] - p <= 15 ? `（★${st + 1}まであと${[70, 85, 95][st] - p}%）` : ""}`}</p>
     <button class="main" id="next">${last ? "結果を見る" : "次の色へ"}</button></div>`;
   $("next").onclick = play;
+  if (p >= 100) { const m = $("mine"); m.classList.remove("glow"); void m.offsetWidth; m.classList.add("glow"); try { navigator.vibrate && navigator.vibrate([12, 60, 24]); } catch (e) {} }
   $("next").scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
@@ -400,17 +504,22 @@ function result(mode, k, prun, first) {
   const s = load();
   let list, rec;
   if (mode === "p") { list = prun.list; rec = { p: prun.res.map((r) => r.p), n: prun.res.map((r) => r.n) }; }
-  else { list = mode === "d" ? dailyList(k) : hardList(k); rec = (mode === "d" ? s.days : s.hdays)[k]; }
+  else { list = mode === "h" ? hardList(k) : dailyList(k); rec = s[BOOK[mode]][k]; }
   if (!rec) return home();
-  const a = avg(rec.p), text = shareText(mode, k, list, rec.p);
-  const showKofi = first && mode !== "p" && a >= 80 && !s.kofi[k + mode];
+  const a = avg(rec.p), text = shareText(mode, k, list, rec.p), real = mode === "d" || mode === "h"; // あとから（a）・練習はシェア・Ko-fi を出さない
+  const showKofi = first && real && a >= 80 && !s.kofi[k + mode];
   if (showKofi) save((s2) => { s2.kofi[k + mode] = 1; });
+  // 新しく取れた実績を小さく知らせる（知らせたものは ach に印をつけ、次からは出さない）
+  const fresh1 = achList(s).filter((x) => x.got && !s.ach[x.id]);
+  if (fresh1.length) save((s2) => { fresh1.forEach((x) => (s2.ach[x.id] = 1)); });
   app.innerHTML = `
-    <header><button class="icon" id="back" aria-label="ホームへ">←</button><h1>重ね染め<small>${mode === "d" ? `今日の5色 #${dayNo(k)}` : mode === "h" ? "上級：記憶染め" : "練習"}</small></h1><span></span></header>
+    <header><button class="icon" id="back" aria-label="ホームへ">←</button><h1>重ね染め<small>${mode === "d" ? `今日の5色 #${dayNo(k)}` : mode === "h" ? "上級：記憶染め" : mode === "a" ? `${md(k)} あとから` : "練習"}</small></h1><span></span></header>
     <div><div class="pole"></div><div class="line" style="margin-top:-2px">${list.map((ci, j) => { const c = D.COLORS[ci]; return `<div class="it"><div class="cloth" style="--col:${c.c};--mine:${dyeHex(rec.n[j])}" aria-label="${c.n}：上が見本、下があなたの布"></div><b>${c.n}</b>${starStr(starsOf(rec.p[j]))}<span>${rec.p[j]}%</span></div>`; }).join("")}</div></div>
     <p class="note">布の上半分が見本、下半分があなたの色</p>
     <p class="big">平均 ${a}%</p>
-    ${mode !== "p" ? `<div class="share">${text.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</div>
+    ${fresh1.length ? `<button class="sub newach" id="newach">🏅 実績：${fresh1[0].name}${fresh1.length > 1 ? ` ほか${fresh1.length - 1}つ` : ""}</button>` : ""}
+    ${mode === "a" ? `<p class="note">あとから染めた日は、カレンダーに印がつきます（連続の日には入りません）</p><button class="main" id="go-cal">カレンダーへ</button>` : ""}
+    ${real ? `<div class="share">${text.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</div>
     <button class="main" id="share">結果をシェア</button>
     <div class="shares"><a id="toX" target="_blank" rel="noopener">Xで投稿</a><a id="toLine" target="_blank" rel="noopener">LINEで送る</a><button id="copy">コピー</button></div>
     <p class="note">次の5色まで あと <b>${untilNext()}</b></p>` : ""}
@@ -422,7 +531,9 @@ function result(mode, k, prun, first) {
   $("go-p").onclick = () => startRun("p");
   $("go-dex").onclick = dex;
   if ($("go-h")) $("go-h").onclick = () => (k === todayKey() ? startRun("h") : home()); // 画面を開いたまま0時を過ぎたら、翌日の上級は始めない
-  if (mode !== "p") {
+  if ($("go-cal")) $("go-cal").onclick = () => cal(k.slice(0, 7));
+  if ($("newach")) $("newach").onclick = achv;
+  if (real) {
     const withUrl = text + "\n" + SITE;
     $("toX").href = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(withUrl);
     $("toLine").href = "https://line.me/R/share?text=" + encodeURIComponent(withUrl);
@@ -449,7 +560,48 @@ function dex(sel) {
   bindFooter();
 }
 
-window.__kz = { mode: () => MODE, D, pick, dailyList, hardList, dyeHex, deOf, pctOf, starsOf, seedOf, todayKey, dayNo, shareText, streak, load };
+// ---- 染めた日のカレンダー（今日の5色の日は★の平均で濃さ、あとから染めた日は点線、取りこぼした7日は押すと遊べる）----
+function cal(ym) {
+  const s = load(), k = todayKey(), first = EPOCH.slice(0, 7), last = k.slice(0, 7);
+  ym = ym && ym >= first && ym <= last ? ym : last;
+  const [y, m] = ym.split("-").map(Number), start = new Date(Date.UTC(y, m - 1, 1)), nd = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const miss = missedDays(s, k), st = streak(s.days), shift = (n) => { const d = new Date(Date.UTC(y, m - 1 + n, 1)); return d.toISOString().slice(0, 7); };
+  const prev = shift(-1), next = shift(1), ra = s.runs.a;
+  let cells = "";
+  for (let i = 0; i < start.getUTCDay(); i++) cells += `<span></span>`;
+  for (let d = 1; d <= nd; d++) {
+    const dk = `${ym}-${String(d).padStart(2, "0")}`, r = s.days[dk], l = s.late[dk], tcls = dk === k ? " today" : "", h = s.hdays[dk] ? " h" : "";
+    if (r) { const lv = Array.isArray(r.p) ? Math.max(1, starsOf(avg(r.p))) : 1; cells += `<span class="c d${lv}${tcls}${h}" aria-label="${m}月${d}日 染めた">${d}<small>${"★".repeat(lv)}</small></span>`; }
+    else if (l) cells += `<span class="c late${tcls}${h}" aria-label="${m}月${d}日 あとから染めた">${d}<small>あと</small></span>`;
+    else if (miss.includes(dk)) cells += `<button class="c miss${tcls}" data-d="${dk}" aria-label="${m}月${d}日の5色をあとから染める">${d}<small>${ra && ra.date === dk ? "続き" : "↺"}</small></button>`;
+    else cells += `<span class="c${tcls}${h}">${d}</span>`;
+  }
+  app.innerHTML = `
+    <header><button class="icon" id="back" aria-label="ホームへ">←</button><h1>染めた日<small>${Object.keys(s.days).length}日${st ? `・${st}日連続` : ""}</small></h1><span></span></header>
+    <div class="calh"><button class="icon" id="prev" aria-label="前の月"${ym <= first ? " disabled" : ""}>‹</button><b>${y}年${m}月</b><button class="icon" id="next" aria-label="次の月"${ym >= last ? " disabled" : ""}>›</button></div>
+    <div class="cal">${["日", "月", "火", "水", "木", "金", "土"].map((w) => `<span class="wd">${w}</span>`).join("")}${cells}</div>
+    <div class="legend"><span><i style="background:var(--gold)"></i>染めた日（濃いほど★）</span><span><i style="border:1px dashed var(--gold)"></i>あとから染めた</span>${miss.length ? `<span><i style="border:1px dashed var(--muted)"></i>↺ 染められる</span>` : ""}</div>
+    ${miss.length ? `<p class="note">↺ の日は、あとから染められます（7日前まで・連続の日には入りません）</p><div class="row">${miss.slice(0, 2).map((d) => `<button class="sub" data-d="${d}">${md(d)}の5色${ra && ra.date === d ? "の続き" : ""}</button>`).join("")}</div>` : ""}
+    ${footer()}`;
+  $("back").onclick = home;
+  if ($("prev")) $("prev").onclick = () => cal(prev);
+  if ($("next")) $("next").onclick = () => cal(next);
+  document.querySelectorAll("[data-d]").forEach((b) => (b.onclick = () => startRun("a", b.dataset.d)));
+  bindFooter();
+}
+
+// ---- 実績の一覧（まだのものは条件と進み具合を出す）----
+function achv() {
+  const s = load(), L = achList(s), got = L.filter((a) => a.got).length;
+  app.innerHTML = `
+    <header><button class="icon" id="back" aria-label="ホームへ">←</button><h1>実績<small>${got}/${L.length}</small></h1><span></span></header>
+    <div class="achs">${L.map((a) => `<div class="ach ${a.got ? "got" : "no"}"><span class="ic">${a.got ? "🏅" : "○"}</span><b>${a.name}</b><span class="pg">${a.got ? "達成" : `${a.cur}/${a.goal}${a.unit}`}</span><small>${a.cond}</small></div>`).join("")}</div>
+    ${footer()}`;
+  $("back").onclick = home;
+  bindFooter();
+}
+
+window.__kz = { mode: () => MODE, D, pick, dailyList, hardList, dyeHex, deOf, pctOf, starsOf, seedOf, todayKey, dayNo, shareText, streak, load, missedDays, achList, tally, adviceOf, EPOCH };
 home();
 if ("serviceWorker" in navigator && location.protocol === "https:" && /github\.io$/.test(location.hostname)) navigator.serviceWorker.register("sw.js").catch(() => {});
 </script>

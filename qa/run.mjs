@@ -1,4 +1,4 @@
-// 重ね染めの検査。データ（お手本が本当にいちばん近いか）・5色の組み方（何千回）・通しで遊ぶ・記録・続きから・上級・色帳・スマホ幅・PWA を確かめる。
+// 重ね染めの検査。データ（お手本が本当にいちばん近いか）・5色の組み方（何千回）・通しで遊ぶ・記録・続きから・上級・色帳・見立て・実績・カレンダー・あとから遊ぶ日・スマホ幅・PWA を確かめる。
 // 使い方: node qa/run.mjs   失敗があれば終了コード 1。結果は qa-report/report.md。
 import { chromium } from "playwright";
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
@@ -251,6 +251,102 @@ try {
     await pc.reload();
     check("最後の1問のあと閉じても、開き直すと結果へ進み今日の記録がつく", await pc.evaluate(() => { const g = window.__kz; return !!g.load().days[g.todayKey()] && !g.load().runs.d; }));
     await pc.close(); }
+  // 9. 見立て：1色に1回・方向だけを言う・上級には無い・使ったら記録に残る
+  { const pv = await newPage(); await pv.click("#howto-ok");
+    const adv = await pv.evaluate(() => { const { D, adviceOf } = window.__kz; const okRecipe = D.COLORS.every((c) => adviceOf(c.r, c) === "もう見本どおり"); const words = new Set(); let leak = 0; for (const c of D.COLORS) for (let k = 0; k < 4; k++) { const n = [0, 0, 0, 0]; n[k] = 1; const a = adviceOf(n, c); words.add(a); if (/\d|藍|紅花|刈安|紫根/.test(a)) leak++; } return { okRecipe, words: [...words], leak }; });
+    check("見立て：お手本どおりなら「もう見本どおり」、言うのは濃さ・色みの向きだけ（液の名前・回数は言わない）", adv.okRecipe && adv.leak === 0 && adv.words.every((w) => /^(もう見本どおり|もっと濃く|濃すぎる|(赤|緑|黄|青)みが足りない)$/.test(w)), adv.words.join(","));
+    await pv.click("#go-d");
+    check("見立ては染める前は押せない", await pv.isDisabled("#mitate"));
+    await pv.click('.vat[data-k="1"]'); await pv.waitForTimeout(260); await pv.click("#mitate");
+    check("見立てを押すと一言が出て、その色ではもう押せない", (await pv.locator(".mitate").count()) === 1 && await pv.isDisabled("#mitate"));
+    await pv.reload(); await pv.click("#go-d");
+    await pv.click('.vat[data-k="1"]'); await pv.waitForTimeout(260);
+    check("見立てを使った色は、開き直しても使ったまま（1色に1回）", await pv.isDisabled("#mitate") && (await pv.textContent("#mitate")) === "見立て済");
+    await pv.click("#decide");
+    check("決めたあと、目盛りと見立ての一言が出る", (await pv.locator(".verdict .meter").count()) === 1 && /見立て：/.test(await pv.textContent(".verdict .note")));
+    await pv.click("#next");
+    check("次の色では、また見立てを使える", !(await pv.locator(".mitate").count()) && (await pv.textContent("#mitate")) === "見立て");
+    for (let i = 1; i < 5; i++) { await dyeRecipe(pv); await pv.waitForTimeout(260); await pv.click("#decide"); if (i === 1) check("お手本どおり（100%）に染めると「ぴたり」が出る", (await pv.locator(".pitari").count()) === 1); await pv.click("#next"); }
+    const rec = await pv.evaluate(() => { const g = window.__kz; return g.load().days[g.todayKey()]; });
+    check("見立てを使った色は、日ごとの記録に印（h）が残る", JSON.stringify(rec.h) === "[1,0,0,0,0]", JSON.stringify(rec.h));
+    await pv.click("#back"); await pv.click("#go-h");
+    check("上級（記憶染め）には見立てが無い", (await pv.locator("#mitate").count()) === 0);
+    await pv.close(); }
+
+  // 10. 実績：いまの記録から数える・10〜14こ・まだのものは進み具合・取れたら結果に小さく1回だけ
+  { const pa = await newPage(); await pa.click("#howto-ok");
+    const t = await pa.evaluate(() => { const g = window.__kz, N = g.D.COLORS.length; const rec = (p, h) => ({ p, n: p.map(() => [1, 0, 0, 0]), h });
+      const s = { v: 1, days: { "2026-11-05": rec([100, 96, 95, 99, 100], [0, 0, 0, 0, 0]), "2026-11-06": rec([60, 70, 80, 90, 100], [1, 0, 0, 0, 0]), "2026-11-07": 1 }, hdays: { "2026-11-05": rec([90, 85, 80, 88, 86]) }, late: { "2026-11-04": rec([100, 100, 50, 50, 50]) }, dex: Object.fromEntries(g.D.COLORS.slice(0, 13).map((c) => [c.n, 3])), runs: {}, kofi: {}, ach: {} };
+      const L = g.achList(s), by = Object.fromEntries(L.map((a) => [a.id, a])), t = g.tally(s);
+      return { n: L.length, t, by, N, fams: new Set(g.D.COLORS.slice(0, 13).map((c) => c.f)).size, empty: g.achList({ v: 1, days: {}, hdays: {}, late: {}, dex: {}, runs: {} }).filter((a) => a.got).length }; });
+    check("実績は10〜14こ（腕前・集める・続けるを混ぜる）", t.n >= 10 && t.n <= 14 && ["first", "days7", "hard5"].every((k) => t.by[k]) && ["full3", "clean", "hard", "pitari"].every((k) => t.by[k]) && ["dex4", "dexall", "fam"].every((k) => t.by[k]), `${t.n}こ`);
+    check("実績の数え方：日数・ぴたり（あとからも数える）・★3の最多・見立てなし・上級の最高・色帳・色の仲間", t.t.days === 3 && t.t.pitari === 5 && t.t.best3 === 5 && t.t.clean === 1 && t.t.hbest === 86 && t.t.seen === 13 && t.t.fam === t.fams && t.t.hdays === 1, JSON.stringify(t.t));
+    check("実績：取れたものは達成、まだのものは進み具合（3/7 のように）", t.by.full3.got && t.by.clean.got && t.by.hard.got && t.by.dex4.got && !t.by.days7.got && t.by.days7.cur === 3 && t.by.days7.goal === 7 && !t.by.dexall.got && t.by.dexall.goal === t.N && t.by.pitari10.cur === 5);
+    check("記録が空なら、取れている実績は0", t.empty === 0);
+    await pa.click("#go-ach");
+    check("ホームから実績の画面が開き、全部の実績と進み具合が出る", (await pa.locator(".ach").count()) === t.n && (await pa.locator(".ach .pg").first().textContent()) === "0/1");
+    await pa.click("#back"); await pa.click("#go-d");
+    for (let i = 0; i < 5; i++) { await dyeRecipe(pa); await pa.waitForTimeout(260); await pa.click("#decide"); await pa.click("#next"); }
+    check("新しく取れた実績は、結果の画面に小さく「🏅 実績：」と出る", /🏅 実績：/.test(await pa.textContent("#newach").catch(() => "")));
+    await pa.click("#back"); await pa.click("#go-d");
+    check("同じ実績は、結果を見直しても二度は知らせない", (await pa.locator("#newach").count()) === 0);
+    await pa.close(); }
+
+  // 11. 取りこぼした日（過去7日）：何百日分も、日付どおり・遊んでいない日だけ・7日以内
+  { const pd = await newPage();
+    const r = await pd.evaluate(() => { const g = window.__kz, bad = []; const add = (k, n) => new Date(Date.parse(k) + n * 864e5).toISOString().slice(0, 10); let total = 0;
+      for (let i = 0; i < 400; i++) { const k = add(g.EPOCH, i), s = { days: {}, late: {} };
+        for (let j = 1; j <= 9; j++) { const d = add(k, -j), x = (i * 7 + j * 13) % 5; if (x === 0) s.days[d] = { p: [90] }; else if (x === 1) s.late[d] = { p: [90] }; }
+        const m = g.missedDays(s, k); total += m.length;
+        for (const d of m) { if (!(d < k && d >= add(k, -7) && d >= g.EPOCH)) bad.push(`${k}:${d}範囲外`); if (s.days[d] || s.late[d]) bad.push(`${k}:${d}遊んだ日`); }
+        for (let j = 1; j <= 7; j++) { const d = add(k, -j); if (d >= g.EPOCH && !s.days[d] && !s.late[d] && !m.includes(d)) bad.push(`${k}:${d}抜け`); }
+        if (m.join() !== m.slice().sort().reverse().join()) bad.push(`${k}:順`);
+        if (m.length && JSON.stringify(g.dailyList(m[0])) !== JSON.stringify(g.pick(g.seedOf(m[0])))) bad.push(`${k}:問題がちがう`); }
+      return { bad: bad.slice(0, 5), n: bad.length, total, first: g.missedDays({ days: {}, late: {} }, g.EPOCH).length }; });
+    check("400日分：取りこぼした日は、きのう〜7日前の遊んでいない日だけ・始まりの日より前は無い・その日の5色と同じ問題", r.n === 0 && r.total > 400 && r.first === 0, r.bad.join(" | "));
+    await pd.close(); }
+  { // 時計を10日進めて、あとから遊ぶ（今日の記録・連続の日・Ko-fi・シェアには数えない。色帳には載る。今日の途中経過を消さない）
+    const pl = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    pl.on("pageerror", (e) => errors.push(e.stack));
+    await pl.addInitScript(() => { const RD = Date, off = 10 * 864e5; window.Date = class extends RD { constructor(...a) { if (a.length) super(...a); else super(RD.now() + off); } static now() { return RD.now() + off; } }; });
+    await pl.goto(url);
+    const set = await pl.evaluate(() => { const g = window.__kz, k = g.todayKey(), add = (n) => new Date(Date.parse(k) + n * 864e5).toISOString().slice(0, 10), rec = { p: [90, 90, 90, 90, 90], n: [[1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0]] };
+      const s = { v: 1, tut: true, days: { [add(-1)]: rec }, hdays: {}, late: {}, dex: {}, kofi: {}, runs: { d: { mode: "d", date: k, list: g.dailyList(k), res: [{ n: [1, 0, 0, 0], p: 50 }], id: "today" } } };
+      localStorage.setItem("kasane-v1", JSON.stringify(s)); return { k, miss: add(-3), y: add(-1) }; });
+    await pl.reload();
+    check("ホームの「染めた日」に、取りこぼした日の数が出る", /↺/.test(await pl.textContent("#go-cal")));
+    await pl.click("#go-cal");
+    check("カレンダー：今日の5色を遊んだ日に★の印、取りこぼした日は押せる（高さ44px以上）", (await pl.locator(`.cal .c.d2`).count()) >= 1 && (await pl.locator(`.cal button.c.miss[data-d="${set.miss}"]`).count()) === 1 && (await pl.locator(".cal button.c.miss").evaluateAll((els) => els.every((e) => e.getBoundingClientRect().height >= 44))));
+    await pl.click(`.cal button.c.miss[data-d="${set.miss}"]`);
+    const lr = await pl.evaluate((d) => { const g = window.__kz, r = g.load().runs.a; return { mode: g.mode(), list: r.list, want: g.dailyList(d), date: r.date }; }, set.miss);
+    check("あとから遊ぶと、その日の「今日の5色」と同じ5色になる（日付の種）", lr.mode === "a" && lr.date === set.miss && JSON.stringify(lr.list) === JSON.stringify(lr.want));
+    check("あとからの画面に日付が出る", (await pl.textContent("header")).includes(`${+set.miss.slice(5, 7)}/${+set.miss.slice(8, 10)}の5色`));
+    await pl.click('.vat[data-k="0"]'); await pl.click("#decide"); await pl.click("#next");
+    await pl.reload(); await pl.click("#go-cal");
+    check("あとからも、途中で閉じたら続きから", (await pl.textContent(`.cal button.c.miss[data-d="${set.miss}"]`)).includes("続き"));
+    await pl.click(`.cal button.c.miss[data-d="${set.miss}"]`);
+    check("続きは2色目から", (await pl.textContent("header")).includes("2/5"));
+    for (let i = 1; i < 5; i++) { await dyeRecipe(pl); await pl.waitForTimeout(260); await pl.click("#decide"); await pl.click("#next"); }
+    const after = await pl.evaluate((x) => { const g = window.__kz, s = g.load(); return { late: !!s.late[x.miss], day: !!s.days[x.miss], days: Object.keys(s.days).length, streak: g.streak(s.days), runD: s.runs.d && s.runs.d.res.length, dex: Object.keys(s.dex).length, runA: s.runs.a }; }, set);
+    check("あとから遊んだ日は late に入り、今日の記録（days）・連続の日には数えない", after.late && !after.day && after.days === 1 && after.streak === 1);
+    check("あとから遊んでも、今日の5色の途中経過は消えない・色帳には載る", after.runD === 1 && after.dex >= 5 && !after.runA);
+    check("あとからの結果に、シェア・Ko-fi・上級のボタンは出ない", (await pl.locator("#share, .kofi, #go-h").count()) === 0 && (await pl.locator("#go-cal").count()) === 1);
+    await pl.click("#go-cal");
+    check("カレンダー：あとから遊んだ日は別の印（点線）で、もう押せない", (await pl.locator(".cal .c.late").count()) === 1 && (await pl.locator(`.cal button[data-d="${set.miss}"]`).count()) === 0);
+    await pl.evaluate(() => { startRun("a", "2000-01-01"); });
+    check("7日より前の日は、あとからでも始めない", (await pl.evaluate(() => window.__kz.load().runs.a)) == null && (await pl.locator(".cal").count()) === 1);
+    if (!(await pl.locator("#prev").isDisabled())) { await pl.click("#prev"); check("カレンダーは前の月へ戻れる", (await pl.locator(".cal .c").count()) >= 28); }
+    await pl.close(); }
+  { // 連続の日は1以上のときだけ出す（休んだ日を責めない）
+    const ps = await newPage(); await ps.click("#howto-ok");
+    check("連続の日が0のときは、ホームに「連続」を出さない", !(await ps.textContent(".stats")).includes("連続"));
+    await ps.close(); }
+  for (const w of [320, 390]) { // 実績・カレンダーも幅320pxで崩れない
+    const pw = await newPage(w, 700); await pw.click("#howto-ok");
+    const chk = () => pw.evaluate(() => ({ over: document.documentElement.scrollWidth > innerWidth, small: [...document.querySelectorAll("button, a")].filter((e) => e.offsetParent && e.getBoundingClientRect().height < 44).map((e) => e.textContent.trim() || e.id) }));
+    const h = await chk(); await pw.click("#go-ach"); const a = await chk(); await pw.click("#back"); await pw.click("#go-cal"); const c = await chk();
+    check(`幅${w}px：ホーム・実績・カレンダーが横にはみ出さず、押せる所は44px以上`, ![h, a, c].some((x) => x.over || x.small.length), [h, a, c].map((x) => x.small.join("/")).join(" | "));
+    await pw.close(); }
   { // 同じ日はどのブラウザでも同じ問題：sort の比較の中で乱数を引かない（引く回数がブラウザで変わる）
     const src = ["index.html", ...["gen.js", "data.js"].filter((f) => existsSync(path.join(root, f)))].map((f) => readFileSync(path.join(root, f), "utf8")).join("\n");
     const bad = src.match(/\.sort\(\s*\([^)]*\)\s*=>[^\n;]*\b(R|rng|rand|Math\.random)\s*\(/g) || [];
