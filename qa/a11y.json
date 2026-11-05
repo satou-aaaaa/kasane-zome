@@ -1,0 +1,9 @@
+{
+  "screens": [
+    { "name": "今日の5色", "click": ["#go-d"] },
+    { "name": "練習", "click": ["#go-p"] },
+    { "name": "色帳", "click": ["#go-dex"] },
+    { "name": "染めた日", "click": ["#go-cal"] },
+    { "name": "実績", "click": ["#go-ach"] }
+  ]
+}
