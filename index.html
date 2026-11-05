@@ -199,7 +199,7 @@ footer a{color:var(--muted);min-height:44px;display:inline-flex;align-items:cent
 /* all:unset のボタン（カレンダーのます目など）でも枠が消えないよう、いちばん最後に強く書く（2026-11-04 CodeRabbit） */
 :is(.icon,button,a):focus-visible{outline:2px solid var(--gold)!important;outline-offset:2px}
 </style>
-<!-- a11y:begin 見やすさの設定 v2（shared-workflows template/a11y/a11y.html の写し。ここでは直さず、ひな形を直して全部のゲームへ写す。drift-check と qa/a11y.mjs が同じ中身か見る） -->
+<!-- a11y:begin 見やすさの設定 v3（shared-workflows template/a11y/a11y.html の写し。ここでは直さず、ひな形を直して全部のゲームへ写す。drift-check と qa/a11y.mjs が同じ中身か見る） -->
 <style id="a11y-css">
 /* だれでも：キーボードで選んだ所に太い枠（WCAG 2.4.7・2.4.13） */
 :is(button,a,input,select,textarea,summary,[tabindex]):focus-visible{outline:3px solid #1a5fd0!important;outline-offset:2px!important;box-shadow:0 0 0 5px #fff!important}
@@ -226,6 +226,8 @@ html:not(.a11y-ruby) ruby.a11y-rb>rt{display:none}
 .a11y-dlg button,.a11y-btn,.a11y-saybtn{min-height:44px;min-width:44px;border-radius:10px;border:2px solid #1d2320;background:#fff;color:#1d2320;font:700 15px/1.2 "BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",Meiryo,sans-serif;padding:0 14px;cursor:pointer;letter-spacing:0}
 .a11y-dlg button.a11y-ok{background:#1d2320;color:#fff}
 .a11y-btn.a11y-float{position:fixed;left:max(8px,env(safe-area-inset-left,0px));bottom:max(8px,env(safe-area-inset-bottom,0px));z-index:2147483000}
+/* 読み上げボタンが、いちばん下のボタン・リンクにかぶらないよう下をあける */
+html.a11y-say body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!important}
 .a11y-saybtn{position:fixed;right:max(8px,env(safe-area-inset-right,0px));bottom:max(8px,env(safe-area-inset-bottom,0px));z-index:2147483000;box-shadow:0 2px 8px #0003}
 .a11y-saybtn[hidden],.a11y-dlg [hidden]{display:none!important}
 .a11y-note{font-size:13px!important}
