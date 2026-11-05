@@ -471,7 +471,8 @@ function decide(col) {
   const s = save((s) => {
     const r = s.runs[MODE];
     // 別のタブで先に進んでいたら、この画面の答えは入れない（同じ色の答えが2つにならないように）
-    if (!r || r.date !== cur.date || r.id !== cur.id || r.res.length !== cur.i || (r.hint === cur.i && !cur.h)) { stale = true; return; } // 別のタブでこの色の見立てを使っていたら、印（h）を落とさないよう読み直す
+    if (!r || r.date !== cur.date || r.id !== cur.id || r.res.length !== cur.i) { stale = true; return; }
+    if (r.hint === cur.i) cur.h = true; // 別のタブでこの色の見立てを使っていたら、染めた回数はそのままで印（h）を付けて決める
     r.res.push(cur.h ? { n: cur.n.slice(), p, h: 1 } : { n: cur.n.slice(), p });
     s.dex[col.n] = Math.max(s.dex[col.n] || 0, st);
   });
@@ -612,7 +613,7 @@ function achv() {
   bindFooter();
 }
 
-window.__kz = { mode: () => MODE, D, pick, dailyList, hardList, dyeHex, deOf, pctOf, starsOf, seedOf, todayKey, dayNo, shareText, streak, load, missedDays, achList, tally, adviceOf, EPOCH };
+window.__kz = { mode: () => MODE, cur: () => cur, D, pick, dailyList, hardList, dyeHex, deOf, pctOf, starsOf, seedOf, todayKey, dayNo, shareText, streak, load, missedDays, achList, tally, adviceOf, EPOCH };
 home();
 if ("serviceWorker" in navigator && location.protocol === "https:" && /github\.io$/.test(location.hostname)) navigator.serviceWorker.register("sw.js").catch(() => {});
 </script>
