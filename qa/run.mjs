@@ -446,6 +446,52 @@ try {
 }
 check("画面のエラーが無い", errors.length === 0, errors.slice(0, 3).join(" | "));
 
+{ // だれでも遊べるように：色だけで分けない・数字の手がかり・知らせ・動きを減らす（shared-workflows routines/game-dev.md A1・A2・A7・A8）
+  check("★の数は色だけでなく形でも分かる（取れていない星は ☆）", /"★"\.repeat\(s\)\}<span class="off">\$\{"☆"\.repeat\(3 - s\)\}/.test(html));
+  check("カレンダーの印（★の数・上級も・あとから・↺）は文字や aria-label でも出す", /染めた・★\$\{lv\}\$\{h \? "・上級も" : ""\}/.test(html) && /c\.miss\{[^}]*dotted/.test(html) && /c\.late\{[^}]*dashed/.test(html));
+  check("上級で見本を隠したら、数字の手がかりも「？」にする", /t = col && !hid \? cuesOf\(col\.c\) : null/.test(html) && /"見本の布（隠れています）"/.test(html));
+  const b2 = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
+  try {
+    for (const cvd of [false, true]) {
+      const pg = await b2.newPage({ viewport: { width: 390, height: 844 } });
+      await pg.addInitScript((c) => { localStorage.setItem("kasane-v1", JSON.stringify({ v: 1, tut: true })); localStorage.setItem("a11y-v1", JSON.stringify(c ? { cvd: true, calm: true } : {})); window.__vib = 0; try { Object.defineProperty(navigator, "vibrate", { value: () => { window.__vib++; return true; }, configurable: true }); } catch (e) {} }, cvd);
+      await pg.goto(url); await pg.waitForTimeout(200);
+      await pg.click("#go-p"); await pg.waitForTimeout(100);
+      const open = await pg.evaluate(() => document.querySelector("#nums").open);
+      if (!cvd) await pg.click("#nums summary");
+      const before = await pg.evaluate(() => ["nt0", "nt1", "nt2", "nm0", "nm1", "nm2"].map((id) => document.getElementById(id).textContent));
+      await pg.click('.vat[data-k="0"]'); await pg.click('.vat[data-k="0"]'); await pg.waitForTimeout(400);
+      const after = await pg.evaluate(() => ({ nm: ["nm0", "nm1", "nm2"].map((id) => document.getElementById(id).textContent), nums: document.querySelector("#nums").textContent, vat: document.querySelector('.vat[data-k="0"]').getAttribute("aria-label"), mine: document.querySelector("#mine").getAttribute("aria-label"), live: document.querySelector("#mine-r").getAttribute("aria-live"), vib: window.__vib }));
+      if (!cvd) {
+        check("数字で比べる：見本とあなたの布の濃さ・赤／緑・黄／青が数で出る（A2）", before.every((x) => /^(\d+|[赤緑黄青]\d+|0)$/.test(x)), before.join(","));
+        check("数字で比べる：藍で染めると、あなたの布の濃さが上がり青みが出る", +after.nm[0] > +before[3] && /^青\d+$/.test(after.nm[2]), JSON.stringify(after.nm));
+        check("数字の手がかりは染め方（液の名前・回数）を言わない", !/藍|紅花|刈安|紫根/.test(after.nums));
+        check("桶とあなたの布は、回数と色みを aria-label で伝え、染めた結果は aria-live で知らせる", after.vat === "藍で染める（いま2回）" && /濃さ\d+/.test(after.mine) && after.live === "polite", `${after.vat} / ${after.mine}`);
+        check("ふだんは振動で手ざわりを返す", after.vib >= 2);
+      } else {
+        check("「色の見分けを助ける」を入れると、数字で比べるが最初から開いている", open === true);
+        check("「動きを減らす」を入れると、振動しない（A8）", after.vib === 0, String(after.vib));
+      }
+      await pg.click("#decide"); await pg.waitForTimeout(200);
+      const v = await pg.evaluate(() => ({ st: document.querySelector(".verdict[role=status]") ? 1 : 0, say: document.querySelector(".verdict [data-a11y-say]")?.getAttribute("aria-label") || "" }));
+      if (!cvd) check("決めたあとの一致度は role=status で文字（％と星の数）でも知らせる", v.st === 1 && /一致度\d+％、星\d+つ/.test(v.say), v.say);
+      await pg.close();
+    }
+    const pd = await b2.newPage({ viewport: { width: 390, height: 844 } });
+    await pd.addInitScript(() => localStorage.setItem("kasane-v1", JSON.stringify({ v: 1, tut: true })));
+    await pd.goto(url); await pd.click("#go-dex"); await pd.click(".dex button");
+    check("小さな知らせ（toast）は role=status で読み上げに届く", (await pd.locator(".toast[role=status]").count()) === 1);
+    await pd.close();
+  } catch (e) { check("だれでも遊べるようにの検査が最後まで動く", false, e.message.split("\n")[0]); }
+  await b2.close();
+}
+
+{ // 見やすさ・読みやすさ・偏り（shared-workflows template/qa/a11y.mjs の写し。routines/game-dev.md「だれでも遊べるように」）
+  const { spawnSync } = await import("node:child_process");
+  const a = spawnSync(process.execPath, [path.join(root, "qa", "a11y.mjs")], { encoding: "utf8", env: process.env });
+  check("見やすさ・読みやすさの検査（qa/a11y.mjs。中身は qa-report/a11y.md）", a.status === 0, (a.stdout.match(/^- ❌.*$/gm) || []).join(" / ") || (a.status ? a.stderr.slice(-300) : ""));
+}
+
 const ng = results.filter((r) => !r.ok);
 const md = `# 重ね染め QA\n\n${results.map((r) => `- ${r.ok ? "✅" : "❌"} ${r.name}${r.detail ? `（${r.detail}）` : ""}`).join("\n")}\n\n${ng.length ? `❌ ${ng.length}件` : `✅ ${results.length}項目すべて通過`}\n`;
 mkdirSync(path.join(root, "qa-report"), { recursive: true });

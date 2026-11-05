@@ -32,6 +32,7 @@ node qa/run.mjs   # お手本がいちばん近いか（全部計算し直し）
 - 感想は「感想を送る」から GitHub の Issue フォーム（`.github/ISSUE_TEMPLATE/feedback.yml`、ラベル「感想」）を開くだけ。項目は shared-workflows の `template/.github/ISSUE_TEMPLATE/feedback.yml` と同じにし、名前・メールは聞かない。週1で shared-workflows `routines/game-feedback.md` が読んで直す。
 - 応援は Ko-fi（https://ko-fi.com/satouaaaaa）へのただのリンクだけ。今日の5色・上級を初めて終えて平均80%以上のときだけ、結果の画面の下に1行（共有フォルダ kofi/app-guide.md）。遊ぶのは無料のまま、有料版は置かない。
 - 外へ通信しない。外から読むのは Google Fonts の文字だけ（CSP の `connect-src 'self'` を広げない）。記録は遊ぶ人のブラウザ（localStorage）だけ。
+- 見やすさ：`</head>` の前の見やすさの設定（`<!-- a11y:begin -->`〜`end`）は shared-workflows `template/a11y/a11y.html` の写しで、ここでは直さない。`qa/a11y.mjs` も `template/qa/a11y.mjs` の写し（画面の足し方・許しは `qa/a11y.json` に理由つき）。色だけで分けない・コントラスト 4.5:1・知らせは aria-live・決めつけの言葉を使わない（shared-workflows `routines/game-dev.md`「だれでも遊べるように」）。色そのものが遊びなので、遊ぶ画面に「数字で比べる」（濃さ・赤／緑・黄／青を `cuesOf` で数にする。液の名前・回数は言わない。上級で見本を隠したら見本の数字も「？」。「色の見分けを助ける」で最初から開く）を置く。取れていない星は ☆、カレンダーのあとから遊べる日は点線（あとから染めた日の破線と別）・上級の印は▲（色の見分けを助ける）と aria-label。布と染め液の色そのものは変えない。
 - `hidden` 属性を使う要素に `display` を付けるときは `[hidden]{display:none}` も書く（2026-11-04 上級の見本の覆いがずっと出ていたのを QA で見つけた）。
 - 押せる所は高さ44px以上（QA が見る）。機能を足す・直すたびに `qa/run.mjs` に検査を足す。乱数で組む部分は何千回も作って確かめる（shared-workflows `incidents/2026-10-31-roppo-empty-village.md`）。
 - PWA（`manifest.webmanifest`・`sw.js`・`icon-*.png`）：画面のファイルを足したら `sw.js` の `SHELL` にも足し、中身を大きく変えたら `CACHE` の版を上げる。アイコンは `node tools/make-icons.cjs`、SNS 用の絵 `og.png` は `node tools/make-og.cjs`（答えを入れない）。
