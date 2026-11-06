@@ -38,7 +38,11 @@ check("README の URL のすぐ後ろに全角の字を続けない（Link check
 const ext = [...html.matchAll(/(?:src|href)="(https?:[^"]+)"/g)].map((m) => m[1]).filter((u) => !/^https:\/\/fonts\.googleapis\.com(\/|$)|^https:\/\/ko-fi\.com\/satouaaaaa$/.test(u));
 check("外から読むのは文字（Google Fonts）だけ。スクリプト・広告・解析を入れない", ext.length === 0, ext.join(","));
 check("CSP で通信先を自分だけにしている", /connect-src 'self'/.test(html) && !/connect-src[^;"]*https/.test(html));
-check("Math.random は練習・とことんの色選びだけ（今日の5色・上級は日付の乱数）", (html.match(/Math\.random/g) || []).length === 2);
+check("Math.random は練習・とことんの色選び（shuffle）だけ（今日の5色・上級は日付の乱数）", (html.match(/Math\.random/g) || []).length === 1 && /function shuffle\(a\) \{[^\n]*Math\.random/.test(html));
+// 好きなだけ遊べる（2026-11-06 satou さん「チケット制はいれる必要ありますか？好きなだけ遊んでほしいです」。寄付で成り立たせるため）
+check("ページにチケット（🎫）・残りの数の仕組みが無い", !html.includes("🎫") && !/ELIFE|lifeStr|class="life"/.test(html));
+check("「…すると開く」「…で開く」のような遊ぶモードの鍵が無い・🔒を使わない", !/すると開く|で開きます|解放|🔒/.test(html));
+check("Ko-fi は結果の画面の1行（.kofi）とページ下のリンクだけ", (html.match(/ko-fi\.com\/satouaaaaa/g) || []).length === 2 && /<footer>[^\n]*ko-fi\.com\/satouaaaaa/.test(html) && /showKofi \? `<p class="note kofi">/.test(html));
 { const silly = /お笑い|ギャグ|ボケ|ツッコミ|なんでやねん|（うそ）/;
   check("画面にお笑いの言葉を入れない（本物っぽく）", !silly.test(html)); }
 { const og = (k) => (html.match(new RegExp(`<meta (?:property|name)="${k}" content="([^"]+)"`)) || [])[1] || "";
@@ -107,6 +111,7 @@ try {
   check("はじめて開くと遊び方が出る", await page.locator("#howto[open]").count() === 1);
   await page.click("#howto-ok");
   check("遊ぶ前の画面に Ko-fi のひとことが無い", (await page.locator(".kofi").count()) === 0);
+  check("はじめての日から、今日の5色の前でも上級・とことん・練習のボタンがある（鍵をかけない）", (await page.locator("#go-h").count()) === 1 && (await page.locator("#go-e").count()) === 1 && (await page.locator("#go-p").count()) === 1 && !/開く|🔒/.test(await page.textContent("#go-h")));
   check("遊び方・メニューに感想を送るリンクがある", (await page.getAttribute("#f-fb", "href")) === "https://github.com/satou-aaaaa/kasane-zome/issues/new?template=feedback.yml");
 
   // 4. 通しで遊ぶ：今日の5色をお手本どおりに染める（途中で読み込み直しても続きから）
@@ -197,38 +202,57 @@ try {
     for (let i = 0; i < 5; i++) { await p2.click('.vat[data-k="3"]'); await p2.click("#decide"); await p2.click("#next"); }
     check("平均が80%に届かないときは Ko-fi のひとことを出さない", (await p2.locator(".kofi").count()) === 0);
     await p2.close(); }
-  { // とことん：次々に出る・使う液の少ない色から多い色へ・見立てと85%未満の色で🎫を使う・降りると自己ベスト（2026-11-05 satou さん「一日で遊べる量が少なすぎる」）
+  { // とことん：次々に出る・使う液の少ない色から多い色へ・85%未満でも見立てでも終わらない（チケットなし）・降りると自己ベスト（2026-11-05「一日で遊べる量が少なすぎる」・2026-11-06「好きなだけ遊んでほしい」 satou さん）
     const pe = await newPage(); await pe.click("#howto-ok");
-    const L = await pe.evaluate(() => { const g = window.__kz, n = g.D.COLORS.length; for (let r = 0; r < 500; r++) { const L = g.endlessList(); if (L.length !== n || new Set(L).size !== n) return "全部の色を1回ずつでない"; const t = L.map((i) => g.vatsUsed(g.D.COLORS[i])); if (t.some((x, i) => i && x < t[i - 1])) return "難しさが下がる"; } return g.endlessList().join() === g.endlessList().join() ? "毎回同じ並び" : "ok"; });
-    check("とことんの並び（500回）：全部の色を1回ずつ・使う液の少ない色から多い色へ・毎回ちがう並び", L === "ok", L);
+    const L = await pe.evaluate(() => { const g = window.__kz, n = g.D.COLORS.length; for (let r = 0; r < 500; r++) { const av = r % n, L = g.endlessList(r % 2 ? av : undefined); if (L.length !== n || new Set(L).size !== n) return "全部の色を1回ずつでない"; const t = L.map((i) => g.vatsUsed(g.D.COLORS[i])); if (t.some((x, i) => i && x < t[i - 1])) return "難しさが下がる"; if (r % 2 && L[0] === av) return "直前の色から始まる"; } return g.endlessList().join() === g.endlessList().join() ? "毎回同じ並び" : "ok"; });
+    check("とことんの並び（500回）：全部の色を1回ずつ（1回の並びで同じ色なし）・使う液の少ない色から多い色へ・毎回ちがう並び・直前の色から始めない", L === "ok", L);
+    const P = await pe.evaluate(() => { const g = window.__kz, n = g.D.COLORS.length; for (let r = 0; r < 300; r++) { const s = { pq: "" }, seen = new Set(), plays = Math.floor(n / 5); for (let k = 0; k < plays; k++) { const l = g.practicePick(s); if (l.length !== 5 || new Set(l).size !== 5) return "5色でない"; if (l.some((x) => seen.has(x))) return `${k + 1}回目で同じ色`; l.forEach((x) => seen.add(x)); } const l = g.practicePick(s), rest = [...Array(n).keys()].filter((x) => !seen.has(x)); if (new Set(l).size !== 5) return "つなぎ目で同じ色"; if (!rest.every((x) => l.includes(x))) return "まだの色を先に出さない"; } return "ok"; });
+    check("練習（300回）：全部の色を出し終えるまで同じ色を出さない・つなぎ目でも1回に同じ色なし", P === "ok", P);
     check("ホームに「とことん」の大きなボタン", (await pe.locator("#go-e.main").count()) === 1);
+    check("ページにチケット（🎫）が出ない（ホーム）", !(await pe.textContent("body")).includes("🎫"));
     const bad = async () => { const k = await pe.evaluate(() => { const g = window.__kz, r = g.load().runs.e, c = g.D.COLORS[r.list[r.res.length]]; for (let k = 0; k < 4; k++) { const n = [0, 0, 0, 0]; n[k] = 1; if (g.pctOf(n, c) < g.EPASS) return k; } return -1; }); await pe.click(`.vat[data-k="${k}"]`); await pe.waitForTimeout(260); await pe.click("#decide"); return k; };
     await pe.click("#go-e");
     for (let j = 0; j < 2; j++) { await dyeRecipe(pe); await pe.waitForTimeout(260); await pe.click("#decide"); await pe.click("#next"); }
-    check("とことんは何色目かを出し、🎫が3枚・お手本どおりなら🎫は減らない", (await pe.textContent("header")).includes("3色目") && (await pe.evaluate(() => window.__kz.load().runs.e.life)) === 3);
-    const k1 = await bad();
-    check("とことんで85%に届かない色は🎫を1枚使う", k1 >= 0 && (await pe.evaluate(() => window.__kz.load().runs.e.life)) === 2 && (await pe.locator("#etk").count()) === 1);
-    await pe.click("#next");
+    check("とことんは何色目かを出し、チケットを出さない", (await pe.textContent("header")).includes("3色目") && !(await pe.textContent("body")).includes("🎫") && (await pe.locator("#life").count()) === 0);
+    for (let j = 0; j < 3; j++) { const k1 = await bad(); if (j === 0) check("とことんで85%に届かない色は短く知らせて続ける（「次の色へ」・降りるボタンも残る）", k1 >= 0 && (await pe.locator("#etk").count()) === 1 && (await pe.textContent("#next")) === "次の色へ" && (await pe.locator("#quit").count()) === 1); await pe.click("#next"); }
+    check("とことんは85%に届かない色が3つ続いても終わらない（6色目へ）", (await pe.textContent("header")).includes("6色目") && (await pe.evaluate(() => { const r = window.__kz.load().runs.e; return !!r && !r.over && r.res.length === 5; })));
     await pe.click('.vat[data-k="0"]'); await pe.waitForTimeout(260); await pe.click("#mitate");
-    check("とことんの見立ても🎫を1枚使う", (await pe.evaluate(() => window.__kz.load().runs.e.life)) === 1 && (await pe.locator(".mitate").count()) === 1 && (await pe.textContent("#life")).startsWith("🎫"));
-    await pe.reload(); await pe.click("#go-e");
-    check("とことんは途中で閉じても続きから（4色目・🎫1のまま）", (await pe.textContent("header")).includes("4色目") && (await pe.evaluate(() => window.__kz.load().runs.e.life)) === 1);
-    await pe.click("#quit");
-    check("降りると染めた色の数と自己ベスト更新が出て、記録に残る（今日の記録・連続には入らない）", (await pe.textContent("#eres")).includes("3色") && (await pe.textContent("#ebest")).includes("自己ベスト更新") && (await pe.evaluate(() => { const s = window.__kz.load(); return s.ebest === 3 && !s.runs.e && Object.keys(s.days).length === 0 && Object.keys(s.dex).length >= 3; })));
-    check("とことんの終わりにシェア・Ko-fi を出さない", (await pe.locator("#share, .kofi").count()) === 0);
-    await pe.click("#go-e"); await pe.click("#quit");
-    check("ベストに届かないと、ベストと「あと何色で更新」を出し、ベストは下げない", (await pe.textContent("#ebest")).includes("あと4色で更新") && (await pe.evaluate(() => window.__kz.load().ebest)) === 3);
-    await pe.click("#back");
-    check("ホームのとことんのボタンに自己ベスト", (await pe.textContent("#go-e")).includes("自己ベスト 3色"));
-    await pe.click("#go-e");
-    await pe.evaluate(() => { const s = JSON.parse(localStorage.getItem("kasane-v1")); s.runs.e.life = 0; localStorage.setItem("kasane-v1", JSON.stringify(s)); }); await pe.click("#back"); await pe.click("#go-e");
-    await pe.click('.vat[data-k="0"]'); await pe.waitForTimeout(260);
-    check("🎫が無いと見立ては押せない", await pe.isDisabled("#mitate"));
+    check("とことんの見立ては何も減らさずに使え、1色に1回", (await pe.locator(".mitate").count()) === 1 && (await pe.isDisabled("#mitate")) && (await pe.textContent("#mitate")) === "見立て済");
     await pe.click("#reset"); await dyeRecipe(pe); await pe.waitForTimeout(260); await pe.click("#decide"); await pe.click("#next");
-    await bad();
-    check("🎫が無いときに85%に届かないと終わりを知らせ、ボタンは「結果を見る」", (await pe.textContent("#etk")).includes("ここまで") && (await pe.textContent("#next")) === "結果を見る" && (await pe.locator("#quit").count()) === 0);
-    await pe.click("#next");
-    check("終わりの画面は届かなかった色を数に入れない（1色）・ベストは下げない", (await pe.locator("#eout").count()) === 1 && (await pe.textContent("#eres")).includes("1色") && (await pe.evaluate(() => window.__kz.load().ebest)) === 3 && (await pe.locator("#go-e.main").count()) === 1);
+    await pe.click('.vat[data-k="0"]'); await pe.waitForTimeout(260);
+    check("見立てを使った次の色でも見立てが押せる（数に限りがない）", !(await pe.isDisabled("#mitate")));
+    await pe.click("#mitate"); await pe.click("#reset"); await dyeRecipe(pe); await pe.waitForTimeout(260); await pe.click("#decide"); await pe.click("#next");
+    await pe.reload(); await pe.click("#go-e");
+    check("とことんは途中で閉じても続きから（8色目）", (await pe.textContent("header")).includes("8色目"));
+    await pe.click("#quit");
+    check("降りると染めた色の数と自己ベスト更新が出て、記録に残る（今日の記録・連続には入らない）", (await pe.textContent("#eres")).includes("7色") && (await pe.textContent("#ebest")).includes("自己ベスト更新") && (await pe.evaluate(() => { const s = window.__kz.load(); return s.ebest === 7 && !s.runs.e && Object.keys(s.days).length === 0 && Object.keys(s.dex).length >= 7; })));
+    check("とことんの終わりに、85%に届かなかった色と見立ての回数を数だけ出す", (await pe.textContent("#emiss")).includes("届かなかった色 3") && (await pe.textContent("#emiss")).includes("見立て 2回"));
+    check("とことんの終わりにシェア・Ko-fi を出さない", (await pe.locator("#share, .kofi").count()) === 0);
+    const last = await pe.evaluate(() => window.__kz.load().elast);
+    await pe.click("#go-e");
+    check("次の回の1色目は、前の回で最後に染めた色と同じにしない", await pe.evaluate((x) => { const r = window.__kz.load().runs.e; return x !== "" && r.list[0] !== +x; }, last));
+    await pe.click("#quit");
+    check("ベストに届かないと、ベストと「あと何色で更新」を出し、ベストは下げない", (await pe.textContent("#ebest")).includes("あと8色で更新") && (await pe.evaluate(() => window.__kz.load().ebest)) === 7);
+    await pe.click("#back");
+    check("ホームのとことんのボタンに自己ベスト", (await pe.textContent("#go-e")).includes("自己ベスト 7色"));
+    { // 並びを使い切っても終わらず、新しい並びを足して続ける（つなぎ目で同じ色を続けない）
+      await pe.click("#go-e");
+      await pe.evaluate(() => { const g = window.__kz, s = JSON.parse(localStorage.getItem("kasane-v1")), r = s.runs.e; r.res = r.list.slice(0, -1).map((i) => ({ n: g.D.COLORS[i].r.slice(), p: 100 })); localStorage.setItem("kasane-v1", JSON.stringify(s)); });
+      await pe.click("#back"); await pe.click("#go-e");
+      const n = await pe.evaluate(() => window.__kz.D.COLORS.length);
+      await dyeRecipe(pe); await pe.waitForTimeout(260); await pe.click("#decide");
+      const r = await pe.evaluate(() => window.__kz.load().runs.e);
+      check("並びの最後の色を染めても終わらず、新しい並びを足して次の色へ（つなぎ目で同じ色を続けない）", !!r && r.list.length === 2 * n && r.list[n] !== r.list[n - 1] && new Set(r.list.slice(n)).size === n && (await pe.textContent("#next")) === "次の色へ");
+      await pe.click("#next");
+      check("新しい並びの1色目へ進む", (await pe.textContent("header")).includes(`${n + 1}色目`));
+      await pe.click("#quit"); await pe.click("#back"); }
+    { // 前の版の途中経過（🎫の life・🎫が尽きて終わった over）も読める
+      await pe.evaluate(() => { const g = window.__kz, s = JSON.parse(localStorage.getItem("kasane-v1")); s.runs.e = { mode: "e", date: g.todayKey(), list: g.endlessList(), res: [{ n: [1, 0, 0, 0], p: 90 }], life: 0, id: "old" }; localStorage.setItem("kasane-v1", JSON.stringify(s)); });
+      await pe.reload(); await pe.click("#go-e");
+      check("前の版の途中経過（life が 0）でも続きから遊べ、見立ても押せる", (await pe.textContent("header")).includes("2色目") && (await pe.click('.vat[data-k="0"]'), await pe.waitForTimeout(260), !(await pe.isDisabled("#mitate"))));
+      await pe.evaluate(() => { const g = window.__kz, s = JSON.parse(localStorage.getItem("kasane-v1")); s.runs.e = { mode: "e", date: g.todayKey(), list: g.endlessList(), res: [{ n: [1, 0, 0, 0], p: 90 }, { n: [1, 0, 0, 0], p: 20 }], life: 0, over: 1, id: "old2" }; localStorage.setItem("kasane-v1", JSON.stringify(s)); });
+      await pe.reload();
+      check("前の版で🎫が尽きて終わった回は、届かなかった色を数に入れずに結果を出す", (await pe.textContent("#eres")).trim() === "1色 染めた" && (await pe.evaluate(() => window.__kz.load().ebest)) >= 47); }
     await pe.close(); }
 
   // 8. スマホ幅：横にはみ出さない・押せる所は44px以上
