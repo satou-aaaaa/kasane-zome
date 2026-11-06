@@ -204,7 +204,7 @@ try {
     await p2.close(); }
   { // とことん：次々に出る・使う液の少ない色から多い色へ・85%未満でも見立てでも終わらない（チケットなし）・降りると自己ベスト（2026-11-05「一日で遊べる量が少なすぎる」・2026-11-06「好きなだけ遊んでほしい」 satou さん）
     const pe = await newPage(); await pe.click("#howto-ok");
-    const L = await pe.evaluate(() => { const g = window.__kz, n = g.D.COLORS.length; for (let r = 0; r < 500; r++) { const av = r % n, L = g.endlessList(r % 2 ? av : undefined); if (L.length !== n || new Set(L).size !== n) return "全部の色を1回ずつでない"; const t = L.map((i) => g.vatsUsed(g.D.COLORS[i])); if (t.some((x, i) => i && x < t[i - 1])) return "難しさが下がる"; if (r % 2 && L[0] === av) return "直前の色から始まる"; } return g.endlessList().join() === g.endlessList().join() ? "毎回同じ並び" : "ok"; });
+    const L = await pe.evaluate(() => { const g = window.__kz, n = g.D.COLORS.length; for (let r = 0; r < 500; r++) { const av = r % n, L = g.endlessList(r % 2 ? av : undefined); if (L.length !== n || new Set(L).size !== n) return "全部の色を1回ずつでない"; const t = L.map((i) => g.vatsUsed(g.D.COLORS[i])); if (t.some((x, i) => i && x < t[i - 1])) return "難しさが下がる"; if (r % 2 && L[0] === av) return "直前の色から始まる"; } return new Set(Array.from({ length: 5 }, () => g.endlessList().join())).size === 1 ? "毎回同じ並び" : "ok"; });
     check("とことんの並び（500回）：全部の色を1回ずつ（1回の並びで同じ色なし）・使う液の少ない色から多い色へ・毎回ちがう並び・直前の色から始めない", L === "ok", L);
     const P = await pe.evaluate(() => { const g = window.__kz, n = g.D.COLORS.length; for (let r = 0; r < 300; r++) { const s = { pq: "" }, seen = new Set(), plays = Math.floor(n / 5); for (let k = 0; k < plays; k++) { const l = g.practicePick(s); if (l.length !== 5 || new Set(l).size !== 5) return "5色でない"; if (l.some((x) => seen.has(x))) return `${k + 1}回目で同じ色`; l.forEach((x) => seen.add(x)); } const l = g.practicePick(s), rest = [...Array(n).keys()].filter((x) => !seen.has(x)); if (new Set(l).size !== 5) return "つなぎ目で同じ色"; if (!rest.every((x) => l.includes(x))) return "まだの色を先に出さない"; } return "ok"; });
     check("練習（300回）：全部の色を出し終えるまで同じ色を出さない・つなぎ目でも1回に同じ色なし", P === "ok", P);
@@ -250,9 +250,10 @@ try {
       await pe.evaluate(() => { const g = window.__kz, s = JSON.parse(localStorage.getItem("kasane-v1")); s.runs.e = { mode: "e", date: g.todayKey(), list: g.endlessList(), res: [{ n: [1, 0, 0, 0], p: 90 }], life: 0, id: "old" }; localStorage.setItem("kasane-v1", JSON.stringify(s)); });
       await pe.reload(); await pe.click("#go-e");
       check("前の版の途中経過（life が 0）でも続きから遊べ、見立ても押せる", (await pe.textContent("header")).includes("2色目") && (await pe.click('.vat[data-k="0"]'), await pe.waitForTimeout(260), !(await pe.isDisabled("#mitate"))));
+      const priorBest = await pe.evaluate(() => window.__kz.load().ebest);
       await pe.evaluate(() => { const g = window.__kz, s = JSON.parse(localStorage.getItem("kasane-v1")); s.runs.e = { mode: "e", date: g.todayKey(), list: g.endlessList(), res: [{ n: [1, 0, 0, 0], p: 90 }, { n: [1, 0, 0, 0], p: 20 }], life: 0, over: 1, id: "old2" }; localStorage.setItem("kasane-v1", JSON.stringify(s)); });
       await pe.reload();
-      check("前の版で🎫が尽きて終わった回は、届かなかった色を数に入れずに結果を出す", (await pe.textContent("#eres")).trim() === "1色 染めた" && (await pe.evaluate(() => window.__kz.load().ebest)) >= 47); }
+      check("前の版で🎫が尽きて終わった回は、届かなかった色を数に入れずに結果を出す", (await pe.textContent("#eres")).trim() === "1色 染めた" && (await pe.evaluate(() => window.__kz.load().ebest)) === priorBest); }
     await pe.close(); }
 
   // 8. スマホ幅：横にはみ出さない・押せる所は44px以上
