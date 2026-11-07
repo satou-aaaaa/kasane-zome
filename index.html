@@ -48,7 +48,10 @@ h1 small{font-family:var(--f-body);font-size:12px;letter-spacing:0;color:var(--m
 button.main,a.main{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;border-radius:12px;background:var(--gold);color:#241a08;font-weight:700;font-size:17px;padding:0 16px;text-align:center;box-shadow:0 4px 0 #8a6a2c}
 button.main:active{transform:translateY(2px);box-shadow:0 2px 0 #8a6a2c}
 button.main.alt{background:var(--paper);box-shadow:0 4px 0 #9b927f}
+button.main.two{flex-direction:column;gap:0;line-height:1.3;padding-block:6px}
+button.main.two small{font-size:12px;font-weight:500;color:#4a3d22}
 button.main:disabled{opacity:.45;cursor:default}
+button.main[hidden]{display:none}
 button.sub,a.sub{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--paper);font-weight:700;font-size:15px;padding:0 8px;text-align:center}
 button.sub:disabled{opacity:.4;cursor:default}
 .row{display:flex;gap:10px}.row>.sub,.row>.main{flex:1 1 0}
@@ -61,7 +64,15 @@ button.sub:disabled{opacity:.4;cursor:default}
 .cloth::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#0000001f,transparent 16%,#ffffff12 38%,transparent 52%,#00000017 78%,transparent 92%,#0000001a)}
 .pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .sw{display:flex;flex-direction:column;gap:6px;align-items:stretch}
-.sw .cloth{aspect-ratio:4/5}
+.sw .cloth{height:min(calc((min(100vw,460px) - 46px) / 2 * 1.25),24vh)} /* 低い画面でも「これで決める」まで1画面に収める（2026-11-07） */
+#after:empty{display:none}
+#mitate-t:empty{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)} /* 見立ての知らせ（aria-live）は空のあいだも消さず（読み上げが届くように）、場所は取らない */
+@media (max-height:700px){.wrap{gap:10px}
+  /* 「数字で比べる」を開いたまま（色の見分けを助けるでは最初から開く）でも「これで決める」まで1画面に収める（2026-11-07） */
+  .wrap:has(.nums[open]){gap:8px}.wrap:has(.nums[open]) .sw .cloth{height:8vh}
+  .wrap:has(.nums[open]) .sw .lab{font-size:11px}.wrap:has(.nums[open]) .sw .lab b{font-size:16px}
+  .wrap:has(.nums[open]) .vat .tub{width:min(100%,46px)}
+}
 .sw .lab{display:flex;flex-wrap:wrap;gap:0 6px;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--muted)}
 .sw .lab b{font-family:var(--f-disp);font-size:20px;color:var(--paper);letter-spacing:.08em}
 .hidden-t{position:absolute;inset:0;display:grid;place-items:center;background:repeating-linear-gradient(45deg,#2a3546 0 10px,#243040 10px 20px);color:var(--muted);font-size:40px;font-family:var(--f-disp);z-index:2}
@@ -97,6 +108,9 @@ button.sub:disabled{opacity:.4;cursor:default}
 .recipe span{border-radius:999px;padding:4px 10px;background:#00000010;display:inline-flex;align-items:center;gap:6px}
 .recipe span i{width:12px;height:12px;border-radius:50%;background:var(--dye);display:inline-block}
 .verdict .note{color:#6f675d}
+.vs{display:flex;justify-content:center;gap:14px;font-size:12px;color:#4d463d}
+.vs span{display:flex;flex-direction:column;align-items:center;gap:4px}
+.vs i{width:56px;height:36px;border-radius:6px;background:var(--c);box-shadow:inset 0 0 0 1px #00000026}
 /* ホーム */
 .hero{display:flex;gap:10px;justify-content:center;padding:6px 6px 0}
 .hero .h{width:26%;display:flex;flex-direction:column;gap:0;transform-origin:top center;animation:sway 5s ease-in-out infinite}
@@ -119,6 +133,8 @@ button.sub:disabled{opacity:.4;cursor:default}
 .big{font-family:var(--f-disp);font-size:40px;text-align:center;margin:0}
 .share{background:var(--panel);border-radius:12px;padding:12px;white-space:pre-line;font-size:15px;line-height:1.6;text-align:center;border:1px solid var(--line)}
 .shares{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.shares.four{grid-template-columns:1.4fr 1fr 1fr 1fr} /* 結果の画面：シェアは1行にまとめ、「続けて遊ぶ」を上に出す（2026-11-07） */
+.shares #share{background:var(--gold);color:#241a08;border-color:var(--gold)}
 .shares a,.shares button{display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--paper);font-size:14px;font-weight:700;text-decoration:none;padding:0 6px;box-sizing:border-box;font-family:inherit;cursor:pointer}
 /* 色帳 */
 .dex{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
@@ -160,6 +176,7 @@ dialog a{color:#7a5a1c;min-height:44px;display:inline-flex;align-items:center}
 .nums tbody th{text-align:left;font-size:13px;color:var(--muted);font-weight:500;width:4.2em}
 .nums td{font-variant-numeric:tabular-nums;font-weight:700}
 .nums .note{text-align:left;font-size:12px;padding-bottom:10px}
+@media (max-height:700px){.nums th,.nums td{padding:2px}.nums .note{font-size:11px;line-height:1.4;padding-bottom:6px}} /* 低い画面では表を詰める */
 .cues{font-size:13px;color:#4d463d}
 .legend .hdot{width:6px;height:6px;border-radius:50%;background:var(--paper);vertical-align:1px}
 /* 色の見分けを助ける（html.a11y-cvd）：印を大きく・記号にする。布と染め液の色そのものは遊びなので変えない */
@@ -194,6 +211,7 @@ button.sub.newach{border-color:var(--gold);font-size:14px;animation:up .4s ease-
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:12px;color:var(--muted)}
 .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:4px}
 .hint{background:var(--panel);border:1px solid var(--gold);border-radius:12px;padding:10px 12px;font-size:14px;text-align:center}
+.hint.first{margin:0;padding:6px 10px;font-size:13px;border-style:dashed} /* 桶のすぐ上に出す、はじめての1行 */
 footer{margin-top:auto;text-align:center;font-size:12px;color:var(--muted);display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
 footer a{color:var(--muted);min-height:44px;display:inline-flex;align-items:center}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -543,8 +561,8 @@ function home() {
     <p class="lead">染め液を重ねて、見本の伝統色を染める。<br>だれでも同じ1日5色。</p>
     ${done ? `<div class="share">今日の結果　平均 ${avg(done.p)}%\n${done.p.map((p) => "★".repeat(starsOf(p)) || "・").join("　")}</div>` : ""}
     <button class="main" id="go-d">${done ? "今日の結果を見る" : rd ? `続きから（${rd.res.length + 1}色目）` : `今日の5色をはじめる <small>#${dayNo(k)}</small>`}</button>
-    <button class="main" id="go-h" style="background:var(--paper);box-shadow:0 4px 0 #9b927f">${hdone ? "上級の結果を見る" : rh ? "上級の続きから" : "上級：記憶染め（見本は最初だけ）"}</button>
-    ${(() => { const re = s.runs.e && !doneOf(s.runs.e) ? s.runs.e : null; return `<button class="main alt" id="go-e" style="flex-wrap:wrap;row-gap:0">${re ? `とことんの続きから（${re.res.length + 1}色目）` : "とことん：何色続けて染める？"}${s.ebest ? ` <small style="white-space:nowrap">自己ベスト ${s.ebest}色</small>` : ""}</button>`; })()}
+    <button class="main alt two" id="go-h">${hdone ? "上級の結果を見る" : rh ? "上級の続きから" : "上級：記憶染め<small>見本は最初だけ</small>"}</button>
+    ${(() => { const re = s.runs.e && !doneOf(s.runs.e) ? s.runs.e : null; return `<button class="main alt two" id="go-e">${re ? `とことんの続きから（${re.res.length + 1}色目）` : "とことん：何色続けて染める？"}${s.ebest ? `<small>自己ベスト ${s.ebest}色</small>` : ""}</button>`; })()}
     <div class="row"><button class="sub" id="go-p">練習（何度でも）</button><button class="sub" id="go-dex">色帳 ${seen}/${D.COLORS.length}</button></div>
     <div class="row"><button class="sub" id="go-cal">染めた日${miss.length ? `<small style="color:var(--gold)">↺${miss.length}</small>` : ""}</button><button class="sub" id="go-ach">実績 ${achGot(s).length}/${ACH.length}</button></div>
     <div class="stats">${st ? `<div><b>${st}</b><small>連続の日</small></div>` : ""}<div><b>${Object.keys(s.days).length}</b><small>染めた日</small></div><div><b>${n3}</b><small>★3の色</small></div></div>
@@ -617,14 +635,14 @@ function play() {
       <p class="note">3つの数がそろうほど見本に近い色。濃さは大きいほど濃く、赤・緑、黄・青は大きいほどその色みが強い。</p></details>
     <div class="count"><span>染めた回数</span><span class="bar"><i id="cbar" style="width:0"></i></span><span id="cnum">0 / ${D.MAX}</span></div>
     ${run.mode === "h" && !memo ? `<button class="main" id="memo">見本を覚えた（もう見られません）</button>` : ""}
+    ${!s.tut || (run.mode !== "h" && Object.keys(s.dex).length === 0 && i === 0) ? `<p class="hint first" id="first">▼ 桶を押すと布が染まります</p>` : ""}
     <div class="vats" id="vats">${D.VATS.map((v, k) => `<button class="vat" data-k="${k}" aria-label="${v.n}で染める"><span class="tub"><span class="liq" style="--dye:${dyeHex(D.VATS.map((_, j) => (j === k ? 5 : 0)))}"></span></span><span class="nm">${v.n}</span><span class="badge" id="b${k}"></span></button>`).join("")}</div>
     <div class="${run.mode === "h" ? "row" : "row3"}"><button class="sub" id="undo" disabled>ひとつ戻す</button><button class="sub" id="reset" disabled>はじめから</button>${run.mode === "h" ? "" : `<button class="sub" id="mitate" disabled>${used ? "見立て済" : "見立て"}</button>`}</div>
     <div id="mitate-t" aria-live="polite"></div>
     <button class="main" id="decide" disabled>これで決める</button>
     ${run.mode === "e" ? `<p class="note">好きなだけ続けられます。やめるときは「ここで降りる」。</p>` : ""}
     <div id="after"></div>
-    ${run.mode === "e" ? `<button class="sub" id="quit" style="width:100%">ここで降りる（${i}色で終える）</button>` : ""}
-    ${!s.tut || (run.mode !== "h" && Object.keys(s.dex).length === 0 && i === 0) ? `<p class="hint">桶を押すと布が染まります。重ねるほど濃くなります。</p>` : ""}`;
+    ${run.mode === "e" ? `<button class="sub" id="quit" style="width:100%">ここで降りる（${i}色で終える）</button>` : ""}`;
   $("back").onclick = home;
   $("nums").ontoggle = () => { numsOpen = $("nums").open; };
   paintNums();
@@ -696,7 +714,10 @@ function decide(col) {
   const last = doneOf(s.runs[MODE]);
   if (MODE === "e") { paintCount(); if ($("quit")) $("quit").textContent = `ここで降りる（${cur.i + 1}色で終える）`; }
   const best = col.r;
+  $("decide").hidden = true; // 決めたら「決める」を下げ、答え合わせを桶のすぐ下に出す
+  if ($("first")) $("first").remove();
   $("after").innerHTML = `<div class="verdict" role="status">
+    <div class="vs" aria-hidden="true"><span><i style="--c:${col.c}"></i>見本</span><span><i style="--c:${dyeHex(cur.n)}"></i>あなた</span></div>
     <div class="pct" data-a11y-say aria-label="一致度${p}％、星${st}つ">${p}<small>%</small> ${starStr(st)}</div>
     <div class="meter" aria-hidden="true"><i style="--w:${p}%"></i><u style="left:70%"></u><u style="left:85%"></u><u style="left:95%"></u></div>
     ${p >= 100 ? `<div class="pitari">ぴたり</div>` : ""}
@@ -770,12 +791,11 @@ function result(mode, k, prun, first) {
     <p class="big">平均 ${a}%</p>
     ${fresh1.length ? `<button class="sub newach" id="newach">🏅 実績：${fresh1[0].name}${fresh1.length > 1 ? ` ほか${fresh1.length - 1}つ` : ""}</button>` : ""}
     ${mode === "a" ? `<p class="note">あとから染めた日は、カレンダーに印がつきます（連続の日には入りません）</p><button class="main" id="go-cal">カレンダーへ</button>` : ""}
-    ${real ? `<div class="share">${text.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</div>
-    <button class="main" id="share">結果をシェア</button>
-    <div class="shares"><a id="toX" target="_blank" rel="noopener">Xで投稿</a><a id="toLine" target="_blank" rel="noopener">LINEで送る</a><button id="copy">コピー</button></div>
-    <p class="note">次の5色まで あと <b>${untilNext()}</b></p>` : ""}
     ${mode !== "p" ? `<button class="main" id="go-e">続けて遊ぶ：とことん${s.ebest ? `（ベスト ${s.ebest}色）` : ""}</button>` : ""}
-    ${mode === "d" && k === todayKey() && !s.hdays[k] ? `<button class="main" id="go-h" style="background:var(--paper);box-shadow:0 4px 0 #9b927f">上級：記憶染めに挑む</button>` : ""}
+    ${mode === "d" && k === todayKey() && !s.hdays[k] ? `<button class="main alt" id="go-h">上級：記憶染めに挑む</button>` : ""}
+    ${real ? `<div class="share">${text.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</div>
+    <div class="shares four"><button id="share">シェア</button><a id="toX" target="_blank" rel="noopener" aria-label="Xで投稿">X</a><a id="toLine" target="_blank" rel="noopener" aria-label="LINEで送る">LINE</a><button id="copy">コピー</button></div>
+    <p class="note">次の5色まで あと <b>${untilNext()}</b></p>` : ""}
     <div class="row"><button class="sub" id="go-p">${mode === "p" ? "もう一度練習" : "練習する"}</button><button class="sub" id="go-dex">色帳を見る</button></div>
     ${showKofi ? `<p class="note kofi">楽しめたら、<a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi でコーヒー1杯の応援</a>をもらえると、新しい色とゲームづくりの励みになります（任意・遊ぶのはずっと無料）。</p>` : ""}
     <p class="note"><a href="${FEEDBACK}" target="_blank" rel="noopener" id="fb">感想を送る</a></p>`;

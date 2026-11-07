@@ -265,6 +265,39 @@ try {
     check(`幅${w}px：横にはみ出さず、押せる所は高さ44px以上`, homeOk && !r.over && r.small.length === 0, r.small.join(","));
     await p3.close();
   }
+  // 8b. スマホの1画面目（2026-11-07 UI/UX の見直し）：はじめに押す所・決める所・答え合わせ・もう一回が見える
+  for (const [w, h] of [[390, 844], [320, 640]]) {
+    const pu = await newPage(w, h); await pu.click("#howto-ok");
+    const inView = (sel) => pu.evaluate((q) => { const e = document.querySelector(q); if (!e || !e.offsetParent) return false; const r = e.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; }, sel);
+    check(`${w}×${h}：ホームの「今日の5色をはじめる」が1画面目にある`, await inView("#go-d"));
+    const gh = await pu.evaluate(() => { const b = document.querySelector("#go-h"), t = b.firstChild, r = document.createRange(); r.selectNodeContents(t); return { lines: r.getClientRects().length, sub: !!b.querySelector("small") }; });
+    check(`${w}×${h}：ホームの上級のボタンは題が1行で、説明は小さな2行目`, gh.lines === 1 && gh.sub, JSON.stringify(gh));
+    await pu.click("#go-d");
+    check(`${w}×${h}：遊ぶ画面で「これで決める」まで1画面に収まる（はじめての案内があっても）`, await inView("#decide") && await inView("#first"));
+    check(`${w}×${h}：はじめての案内は桶のすぐ上に1行で出る`, await pu.evaluate(() => { const f = document.querySelector("#first"); return !!f && f.nextElementSibling && f.nextElementSibling.id === "vats" && f.getBoundingClientRect().height <= 40; }));
+    await pu.click('.vat[data-k="0"]'); await pu.waitForTimeout(260); await pu.click("#decide");
+    const v = await pu.evaluate(() => { const norm = (hex) => { const d = document.createElement("i"); d.style.color = hex; document.body.append(d); const c = getComputedStyle(d).color; d.remove(); return c; }, kz = window.__kz, r = kz.load().runs[kz.mode()], chips = document.querySelectorAll(".verdict .vs i"); return { chips: chips.length, decide: !!document.querySelector("#decide").offsetParent, first: !!document.querySelector("#first"), tgt: chips[0] && getComputedStyle(chips[0]).backgroundColor, wantT: norm(kz.D.COLORS[r.list[r.res.length - 1]].c), mine: chips[1] && getComputedStyle(chips[1]).backgroundColor, want: norm(kz.dyeHex(kz.cur().n)) }; });
+    check(`${w}×${h}：決めたら答え合わせに見本とあなたの色が並び、「決める」と案内は下がる`, v.chips === 2 && !v.decide && !v.first && v.mine === v.want && v.tgt === v.wantT, JSON.stringify(v));
+    check(`${w}×${h}：決めたあと「次の色へ」が画面の中に見える`, (await pu.waitForTimeout(700), await inView("#next")));
+    for (let i = 0; i < 5; i++) { if (i) { await pu.click('.vat[data-k="2"]'); await pu.waitForTimeout(260); await pu.click("#decide"); } await pu.click("#next"); }
+    const r = await pu.evaluate(() => { const e = document.querySelector("#go-e"), sh = document.querySelector(".share"), row = document.querySelector(".shares"); const tops = [...row.children].map((x) => Math.round(x.getBoundingClientRect().top)); return { order: !!(e && sh && (e.compareDocumentPosition(sh) & Node.DOCUMENT_POSITION_FOLLOWING)), oneRow: new Set(tops).size === 1 && row.children.length === 4, over: document.documentElement.scrollWidth > innerWidth }; });
+    check(`${w}×${h}：結果の画面は「続けて遊ぶ」がシェアより上・シェアは1行・横にはみ出さない`, r.order && r.oneRow && !r.over, JSON.stringify(r));
+    await pu.close();
+  }
+  { // 「色の見分けを助ける」では「数字で比べる」が最初から開く。低い画面でも「これで決める」まで1画面に収まる（2026-11-07 CodeRabbit）
+    for (const [w, h] of [[320, 640]]) {
+      const pc = await browser.newPage({ viewport: { width: w, height: h } });
+      pc.on("pageerror", (e) => errors.push(e.stack));
+      await pc.addInitScript(() => { if (!sessionStorage.getItem("qa-cvd")) { localStorage.clear(); localStorage.setItem("a11y-v1", JSON.stringify({ cvd: true })); sessionStorage.setItem("qa-cvd", "1"); } });
+      await pc.goto(url); if (await pc.isVisible("#howto-ok")) await pc.click("#howto-ok");
+      await pc.click("#go-d");
+      const c = await pc.evaluate(() => { const box = (q) => { const e = document.querySelector(q); if (!e || !e.offsetParent) return null; const r = e.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; }; return { cvd: document.documentElement.classList.contains("a11y-cvd"), open: document.querySelector("#nums").open, decide: box("#decide"), first: box("#first"), over: document.documentElement.scrollWidth > innerWidth, bottom: Math.round(document.querySelector("#decide").getBoundingClientRect().bottom) }; });
+      check(`${w}×${h}・色の見分けを助ける：「数字で比べる」を開いたままでも「これで決める」と案内が1画面目にある`, c.cvd && c.open && c.decide && c.first && !c.over, JSON.stringify(c));
+      const m = await pc.evaluate(() => { const e = document.querySelector("#mitate-t"); const r = e.getBoundingClientRect(); return { shown: getComputedStyle(e).display !== "none", live: e.getAttribute("aria-live"), h: r.height, flow: getComputedStyle(e).position }; });
+      check(`${w}×${h}：見立ての知らせ（aria-live）は空のあいだも display:none にせず、場所も取らない`, m.shown && m.live === "polite" && m.h <= 1 && m.flow === "absolute", JSON.stringify(m));
+      await pc.close();
+    }
+  }
   { // 保存できないブラウザでも遊べる（開いているあいだは途中経過を覚えている）
     const pb = await browser.newPage({ viewport: { width: 390, height: 844 } });
     pb.on("pageerror", (e) => errors.push(e.message));
