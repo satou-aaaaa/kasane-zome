@@ -32,11 +32,11 @@
   --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;
   color-scheme:dark;
 }
-html,body{height:100%}
+html{height:100%}body{min-height:100%}
 body{margin:0;background-color:var(--bg);color:var(--paper);font-family:var(--f-body);font-weight:500;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
 /* 布目と灯りは後ろの層に置く（body の地は一色にして、字の濃さを測れるようにする） */
 body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"),radial-gradient(120% 70% at 50% 0%,var(--bg2),var(--bg) 70%)}
-.wrap{max-width:460px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 28px;display:flex;flex-direction:column;gap:14px;min-height:100%;box-sizing:border-box}
+.wrap{max-width:460px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 28px;display:flex;flex-direction:column;gap:14px;min-height:100vh;min-height:100dvh;box-sizing:border-box}
 header{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:44px}
 h1{font-family:var(--f-disp);font-weight:800;font-size:22px;margin:0;letter-spacing:.12em;color:var(--paper)}
 h1 small{font-family:var(--f-body);font-size:12px;letter-spacing:0;color:var(--muted);margin-left:8px;font-weight:500}
