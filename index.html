@@ -65,8 +65,14 @@ button.sub:disabled{opacity:.4;cursor:default}
 .pair{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .sw{display:flex;flex-direction:column;gap:6px;align-items:stretch}
 .sw .cloth{height:min(calc((min(100vw,460px) - 46px) / 2 * 1.25),24vh)} /* 低い画面でも「これで決める」まで1画面に収める（2026-11-07） */
-#mitate-t:empty,#after:empty{display:none}
-@media (max-height:700px){.wrap{gap:10px}}
+#after:empty{display:none}
+#mitate-t:empty{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)} /* 見立ての知らせ（aria-live）は空のあいだも消さず（読み上げが届くように）、場所は取らない */
+@media (max-height:700px){.wrap{gap:10px}
+  /* 「数字で比べる」を開いたまま（色の見分けを助けるでは最初から開く）でも「これで決める」まで1画面に収める（2026-11-07） */
+  .wrap:has(.nums[open]){gap:8px}.wrap:has(.nums[open]) .sw .cloth{height:8vh}
+  .wrap:has(.nums[open]) .sw .lab{font-size:11px}.wrap:has(.nums[open]) .sw .lab b{font-size:16px}
+  .wrap:has(.nums[open]) .vat .tub{width:min(100%,46px)}
+}
 .sw .lab{display:flex;flex-wrap:wrap;gap:0 6px;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--muted)}
 .sw .lab b{font-family:var(--f-disp);font-size:20px;color:var(--paper);letter-spacing:.08em}
 .hidden-t{position:absolute;inset:0;display:grid;place-items:center;background:repeating-linear-gradient(45deg,#2a3546 0 10px,#243040 10px 20px);color:var(--muted);font-size:40px;font-family:var(--f-disp);z-index:2}
@@ -170,6 +176,7 @@ dialog a{color:#7a5a1c;min-height:44px;display:inline-flex;align-items:center}
 .nums tbody th{text-align:left;font-size:13px;color:var(--muted);font-weight:500;width:4.2em}
 .nums td{font-variant-numeric:tabular-nums;font-weight:700}
 .nums .note{text-align:left;font-size:12px;padding-bottom:10px}
+@media (max-height:700px){.nums th,.nums td{padding:2px}.nums .note{font-size:11px;line-height:1.4;padding-bottom:6px}} /* 低い画面では表を詰める */
 .cues{font-size:13px;color:#4d463d}
 .legend .hdot{width:6px;height:6px;border-radius:50%;background:var(--paper);vertical-align:1px}
 /* 色の見分けを助ける（html.a11y-cvd）：印を大きく・記号にする。布と染め液の色そのものは遊びなので変えない */
