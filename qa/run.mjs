@@ -265,6 +265,25 @@ try {
     check(`幅${w}px：横にはみ出さず、押せる所は高さ44px以上`, homeOk && !r.over && r.small.length === 0, r.small.join(","));
     await p3.close();
   }
+  // 8b. スマホの1画面目（2026-11-07 UI/UX の見直し）：はじめに押す所・決める所・答え合わせ・もう一回が見える
+  for (const [w, h] of [[390, 844], [320, 640]]) {
+    const pu = await newPage(w, h); await pu.click("#howto-ok");
+    const inView = (sel) => pu.evaluate((q) => { const e = document.querySelector(q); if (!e || !e.offsetParent) return false; const r = e.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight; }, sel);
+    check(`${w}×${h}：ホームの「今日の5色をはじめる」が1画面目にある`, await inView("#go-d"));
+    const gh = await pu.evaluate(() => { const b = document.querySelector("#go-h"), t = b.firstChild, r = document.createRange(); r.selectNodeContents(t); return { lines: r.getClientRects().length, sub: !!b.querySelector("small") }; });
+    check(`${w}×${h}：ホームの上級のボタンは題が1行で、説明は小さな2行目`, gh.lines === 1 && gh.sub, JSON.stringify(gh));
+    await pu.click("#go-d");
+    check(`${w}×${h}：遊ぶ画面で「これで決める」まで1画面に収まる（はじめての案内があっても）`, await inView("#decide") && await inView("#first"));
+    check(`${w}×${h}：はじめての案内は桶のすぐ上に1行で出る`, await pu.evaluate(() => { const f = document.querySelector("#first"); return !!f && f.nextElementSibling && f.nextElementSibling.id === "vats" && f.getBoundingClientRect().height <= 40; }));
+    await pu.click('.vat[data-k="0"]'); await pu.waitForTimeout(260); await pu.click("#decide");
+    const v = await pu.evaluate(() => ({ chips: document.querySelectorAll(".verdict .vs i").length, decide: !!document.querySelector("#decide").offsetParent, first: !!document.querySelector("#first"), mine: getComputedStyle(document.querySelectorAll(".verdict .vs i")[1]).backgroundColor, want: (() => { const d = document.createElement("i"); d.style.color = window.__kz.dyeHex(window.__kz.cur().n); document.body.append(d); const c = getComputedStyle(d).color; d.remove(); return c; })() }));
+    check(`${w}×${h}：決めたら答え合わせに見本とあなたの色が並び、「決める」と案内は下がる`, v.chips === 2 && !v.decide && !v.first && v.mine === v.want, JSON.stringify(v));
+    check(`${w}×${h}：決めたあと「次の色へ」が画面の中に見える`, (await pu.waitForTimeout(700), await inView("#next")));
+    for (let i = 0; i < 5; i++) { if (i) { await pu.click('.vat[data-k="2"]'); await pu.waitForTimeout(260); await pu.click("#decide"); } await pu.click("#next"); }
+    const r = await pu.evaluate(() => { const e = document.querySelector("#go-e"), sh = document.querySelector(".share"), row = document.querySelector(".shares"); const tops = [...row.children].map((x) => Math.round(x.getBoundingClientRect().top)); return { order: !!(e && sh && (e.compareDocumentPosition(sh) & Node.DOCUMENT_POSITION_FOLLOWING)), oneRow: new Set(tops).size === 1 && row.children.length === 4, over: document.documentElement.scrollWidth > innerWidth }; });
+    check(`${w}×${h}：結果の画面は「続けて遊ぶ」がシェアより上・シェアは1行・横にはみ出さない`, r.order && r.oneRow && !r.over, JSON.stringify(r));
+    await pu.close();
+  }
   { // 保存できないブラウザでも遊べる（開いているあいだは途中経過を覚えている）
     const pb = await browser.newPage({ viewport: { width: 390, height: 844 } });
     pb.on("pageerror", (e) => errors.push(e.message));
