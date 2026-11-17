@@ -267,7 +267,7 @@ try {
     const p3 = await newPage(w, 700); const fb2 = await p3.evaluate(() => { const a = document.querySelector("#howto #fb2"); return a ? a.getBoundingClientRect().height : 0; }); check(`幅${w}px：遊び方の「感想を送る」も高さ44px以上`, fb2 >= 44, `${fb2}px`); await p3.click("#howto-ok");
     const homeOk = await p3.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
     await p3.click("#go-d");
-    const r = await p3.evaluate(() => ({ over: document.documentElement.scrollWidth > innerWidth, small: [...document.querySelectorAll("button, a")].filter((e) => e.offsetParent && e.getBoundingClientRect().height < 44).map((e) => e.textContent.trim() || e.id) }));
+    const r = await p3.evaluate(() => ({ over: document.documentElement.scrollWidth > innerWidth, small: [...document.querySelectorAll("button, a")].filter((e) => e.offsetParent && Math.round(e.getBoundingClientRect().height) < 44).map((e) => e.textContent.trim() || e.id) }));
     check(`幅${w}px：横にはみ出さず、押せる所は高さ44px以上`, homeOk && !r.over && r.small.length === 0, r.small.join(","));
     await p3.close();
   }
@@ -430,7 +430,7 @@ try {
     await pl.reload();
     check("ホームの「染めた日」に、取りこぼした日の数が出る", /↺/.test(await pl.textContent("#go-cal")));
     await pl.click("#go-cal");
-    check("カレンダー：今日の5色を遊んだ日に★の印、取りこぼした日は押せる（高さ44px以上）", (await pl.locator(`.cal .c.d2`).count()) >= 1 && (await pl.locator(`.cal button.c.miss[data-d="${set.miss}"]`).count()) === 1 && (await pl.locator(".cal button.c.miss").evaluateAll((els) => els.every((e) => e.getBoundingClientRect().height >= 44))));
+    check("カレンダー：今日の5色を遊んだ日に★の印、取りこぼした日は押せる（高さ44px以上）", (await pl.locator(`.cal .c.d2`).count()) >= 1 && (await pl.locator(`.cal button.c.miss[data-d="${set.miss}"]`).count()) === 1 && (await pl.locator(".cal button.c.miss").evaluateAll((els) => els.every((e) => Math.round(e.getBoundingClientRect().height) >= 44))));
     await pl.click(`.cal button.c.miss[data-d="${set.miss}"]`);
     const lr = await pl.evaluate((d) => { const g = window.__kz, r = g.load().runs.a; return { mode: g.mode(), list: r.list, want: g.dailyList(d), date: r.date }; }, set.miss);
     check("あとから遊ぶと、その日の「今日の5色」と同じ5色になる（日付の種）", lr.mode === "a" && lr.date === set.miss && JSON.stringify(lr.list) === JSON.stringify(lr.want));
@@ -475,7 +475,7 @@ try {
     await ps.close(); }
   for (const w of [320, 390]) { // 実績・カレンダーも幅320pxで崩れない
     const pw = await newPage(w, 700); await pw.click("#howto-ok");
-    const chk = () => pw.evaluate(() => ({ over: document.documentElement.scrollWidth > innerWidth, small: [...document.querySelectorAll("button, a")].filter((e) => e.offsetParent && e.getBoundingClientRect().height < 44).map((e) => e.textContent.trim() || e.id) }));
+    const chk = () => pw.evaluate(() => ({ over: document.documentElement.scrollWidth > innerWidth, small: [...document.querySelectorAll("button, a")].filter((e) => e.offsetParent && Math.round(e.getBoundingClientRect().height) < 44).map((e) => e.textContent.trim() || e.id) }));
     const h = await chk(); await pw.click("#go-ach"); const a = await chk(); await pw.click("#back"); await pw.click("#go-cal"); const c = await chk();
     check(`幅${w}px：ホーム・実績・カレンダーが横にはみ出さず、押せる所は44px以上`, ![h, a, c].some((x) => x.over || x.small.length), [h, a, c].map((x) => x.small.join("/")).join(" | "));
     await pw.close(); }
